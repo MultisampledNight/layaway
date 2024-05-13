@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use chumsky::{error::Simple, prelude::*, text::whitespace, Parser};
+use chumsky::{error::Simple, prelude::*, Parser};
 
 use crate::relative::{Horizontal, Position, RelativeLayout, Vertical};
 
@@ -29,7 +29,8 @@ impl FromStr for RelativeLayout {
 // resolution = "720p" / "1080p" / "1200p" / "4k"
 //            / ? all other Resolution variants in src/info.rs ?
 //
-// scale = 1*DIGIT ["." 1*DIGIT]
+// scale = float
+// float = 1*DIGIT ["." 1*DIGIT]
 //
 // pos =   hori
 //       / vert
@@ -55,25 +56,38 @@ impl FromStr for RelativeLayout {
 //     while the position is still fulfilled
 
 pub fn layout() -> impl Parser<char, RelativeLayout, Error = Simple<char>> {
-    let pos = choice((
+    let _ = dbg!(scale().parse("2"));
+    todo()
+}
+
+pub fn scale() -> impl Parser<char, f64, Error = Simple<char>> {
+    text::digits(10)
+        .then(just('.').ignore_then(text::digits(10)).or_not())
+        .map(|(natural, frac)| {
+            if let Some(frac) = frac {
+                format!("{natural}.{frac}")
+            } else {
+                natural
+            }
+            .parse()
+            .unwrap()
+        })
+}
+
+pub fn pos() -> impl Parser<char, Position, Error = Simple<char>> {
+    choice((
         hori().map(|hori| Position { hori, ..default() }),
         vert().map(|vert| Position { vert, ..default() }),
         separated(hori(), vert()).map(|(hori, vert)| Position { hori, vert }),
         separated(vert(), hori()).map(|(vert, hori)| Position { hori, vert }),
-    ));
-
-    let _ = dbg!(pos.parse("bottom"));
-    pos.map(|_| todo!())
+    ))
 }
 
 pub fn separated<T, U>(
     a: impl Parser<char, T, Error = Simple<char>>,
     b: impl Parser<char, U, Error = Simple<char>>,
 ) -> impl Parser<char, (T, U), Error = Simple<char>> {
-    a.then_ignore(whitespace())
-        .then_ignore(just(','))
-        .then_ignore(whitespace())
-        .then(b)
+    a.then_ignore(just(',').padded()).then(b)
 }
 
 pub fn hori() -> impl Parser<char, Horizontal, Error = Simple<char>> {
@@ -96,6 +110,7 @@ pub fn shorten(
     required: char,
     optional: &str,
 ) -> impl Parser<char, char, Error = Simple<char>> + '_ {
+    // TODO: make this shorter using Parser::or_not lmao
     just(required).then_ignore(choice((just(optional).ignored(), empty())))
 }
 
