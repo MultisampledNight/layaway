@@ -1,6 +1,6 @@
 use strum::{Display, EnumString};
 
-use crate::{geometry::Size, info::Connector};
+use crate::{geometry::Size, Port};
 
 /// Description of a screen layout,
 /// based on relative positioning.
@@ -11,7 +11,7 @@ pub struct RelativeLayout {
 
 #[derive(Debug)]
 pub struct Screen {
-    pub connector: Connector,
+    pub port: Port,
     pub resolution: Option<Size>,
     pub pos: Position,
 }
@@ -24,20 +24,14 @@ pub struct Position {
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Display, EnumString)]
 pub enum Horizontal {
-    #[strum(serialize = "left")]
     Left,
-    #[strum(serialize = "center")]
     Center,
-    #[strum(serialize = "right")]
     Right,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Display, EnumString)]
 pub enum Vertical {
-    #[strum(serialize = "top")]
     Top,
-    #[strum(serialize = "horizon")]
     Horizon,
-    #[strum(serialize = "right")]
     Bottom,
 }

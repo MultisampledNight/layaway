@@ -13,12 +13,12 @@ use relative::RelativeLayout;
 pub fn run() -> Result<()> {
     let layout = "hdmi@1200p + edp/c,b";
     let layout = layout.parse::<RelativeLayout>();
-    dbg!(layout);
+    let _ = dbg!(layout);
     Ok(())
 }
 
 /// Where an output is plugged in.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Port {
     pub kind: Connector,
     pub idx: u32,
