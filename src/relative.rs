@@ -1,6 +1,6 @@
 use strum::{Display, EnumString};
 
-use crate::{geometry::Size, Port};
+use crate::{info::Resolution, Port};
 
 /// Description of a screen layout,
 /// based on relative positioning.
@@ -12,7 +12,8 @@ pub struct RelativeLayout {
 #[derive(Debug)]
 pub struct Screen {
     pub port: Port,
-    pub resolution: Option<Size>,
+    pub resolution: Option<Resolution>,
+    pub scale: Option<f64>,
     pub pos: Position,
 }
 

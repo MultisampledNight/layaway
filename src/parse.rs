@@ -117,7 +117,7 @@ use std::str::FromStr;
 use chumsky::{error::Simple, prelude::*, Parser};
 
 use crate::{
-    info::Connector,
+    info::{Connector, Resolution},
     relative::{Horizontal, Position, RelativeLayout, Screen, Vertical},
     Port,
 };
@@ -125,24 +125,37 @@ use crate::{
 impl FromStr for RelativeLayout {
     type Err = Vec<Simple<char>>;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let _ = layout().parse(s);
-        todo!()
+        layout().parse(s)
     }
 }
 
 pub fn layout() -> impl Parser<char, RelativeLayout, Error = Simple<char>> {
-    let _ = dbg!(port().parse("hdmia9"));
-    todo()
+    screen()
+        .separated_by(just('+').padded())
+        .map(|screens| RelativeLayout { screens })
 }
 
 pub fn screen() -> impl Parser<char, Screen, Error = Simple<char>> {
-    todo()
+    let resolution = Resolution::parser;
+    port()
+        .then(just('@').padded().ignore_then(resolution()).or_not())
+        .then(just(':').padded().ignore_then(scale()).or_not())
+        .then(just('/').padded().ignore_then(pos()).or_not())
+        .map(|(((port, resolution), scale), pos)| Screen {
+            port,
+            resolution,
+            scale,
+            pos: pos.unwrap_or_default(),
+        })
 }
 
 pub fn port() -> impl Parser<char, Port, Error = Simple<char>> {
     Connector::parser()
         .then(text::int(10).or_not())
-        .map(|(kind, idx)| Port { kind, idx: idx.map(|idx| idx.parse().unwrap()).unwrap_or(1) })
+        .map(|(kind, idx)| Port {
+            kind,
+            idx: idx.map(|idx| idx.parse().unwrap()).unwrap_or(1),
+        })
 }
 
 pub fn scale() -> impl Parser<char, f64, Error = Simple<char>> {

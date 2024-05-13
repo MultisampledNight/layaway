@@ -113,7 +113,7 @@ connectors! {
     "wdp" => "wDP" @ Wdp,
 
     // not sure what's the difference to normal hdmi
-    // on all machines only this one is found though
+    // on all my machines only this one is found though
     "hdmia" => "HDMI-A" @ HdmiA,
     /// High-Definition Multimedia Interface®.
     "hdmi" => "HDMI" @ Hdmi,
