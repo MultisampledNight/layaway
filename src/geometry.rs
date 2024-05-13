@@ -1,5 +1,5 @@
 /// Rectangle in pixels.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Rect {
     pub x: Interval,
     pub y: Interval,
@@ -19,13 +19,13 @@ impl Rect {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Point {
     pub x: Pixel,
     pub y: Pixel,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Size {
     pub width: Pixel,
     pub height: Pixel,
@@ -34,7 +34,7 @@ pub struct Size {
 /// Range thought in pixels.
 /// [`std::ops::RangeInclusive`] but not since it's too restricted
 /// and does not implement `PartialOrd`.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Interval {
     start: Pixel,
     end: Pixel,
