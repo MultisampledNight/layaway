@@ -36,12 +36,12 @@ impl FromStr for RelativeLayout {
 //       / vert
 //       / hori sp "," sp vert
 //       / vert sp "," sp hori
-// hori = "l" ["eft"]
-//      / "c" ["enter"]
-//      / "r" ["ight"]
-// vert = "t" ["op"]
-//      / "h" ["orizon"]
-//      / "b" ["ottom"]
+// hori = "left"
+//      / "center"
+//      / "right"
+// vert = "top"
+//      / "horizon"
+//      / "bottom"
 //
 // notes:
 // - connector number defaults to "1"
@@ -56,7 +56,7 @@ impl FromStr for RelativeLayout {
 //     while the position is still fulfilled
 
 pub fn layout() -> impl Parser<char, RelativeLayout, Error = Simple<char>> {
-    let _ = dbg!(scale().parse("2"));
+    let _ = dbg!(pos().parse("bottom,center"));
     todo()
 }
 
@@ -76,10 +76,10 @@ pub fn scale() -> impl Parser<char, f64, Error = Simple<char>> {
 
 pub fn pos() -> impl Parser<char, Position, Error = Simple<char>> {
     choice((
-        hori().map(|hori| Position { hori, ..default() }),
-        vert().map(|vert| Position { vert, ..default() }),
         separated(hori(), vert()).map(|(hori, vert)| Position { hori, vert }),
         separated(vert(), hori()).map(|(vert, hori)| Position { hori, vert }),
+        hori().map(|hori| Position { hori, ..default() }),
+        vert().map(|vert| Position { vert, ..default() }),
     ))
 }
 
@@ -91,27 +91,19 @@ pub fn separated<T, U>(
 }
 
 pub fn hori() -> impl Parser<char, Horizontal, Error = Simple<char>> {
-    let left = shorten('l', "eft").map(|_| Horizontal::Left);
-    let center = shorten('c', "enter").map(|_| Horizontal::Center);
-    let right = shorten('r', "ight").map(|_| Horizontal::Right);
+    let left = just("left").map(|_| Horizontal::Left);
+    let center = just("center").map(|_| Horizontal::Center);
+    let right = just("right").map(|_| Horizontal::Right);
 
     choice((left, center, right))
 }
 
 pub fn vert() -> impl Parser<char, Vertical, Error = Simple<char>> {
-    let top = shorten('t', "op").map(|_| Vertical::Top);
-    let horizon = shorten('h', "orizon").map(|_| Vertical::Horizon);
-    let bottom = shorten('b', "ottom").map(|_| Vertical::Bottom);
+    let top = just("top").map(|_| Vertical::Top);
+    let horizon = just("horizon").map(|_| Vertical::Horizon);
+    let bottom = just("bottom").map(|_| Vertical::Bottom);
 
     choice((top, horizon, bottom))
-}
-
-pub fn shorten(
-    required: char,
-    optional: &str,
-) -> impl Parser<char, char, Error = Simple<char>> + '_ {
-    // TODO: make this shorter using Parser::or_not lmao
-    just(required).then_ignore(choice((just(optional).ignored(), empty())))
 }
 
 fn default<T: Default>() -> T {
