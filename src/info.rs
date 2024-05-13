@@ -1,19 +1,32 @@
 //! Information of which the task of collection is just... tedious chores.
 //!
-//! Note: All enums in this module need to have more specific DSL reprs
-//! listed before more general ones.
+//! Note: If there are multiple variants
+//! where one of them is the prefix of the other,
+//! put the longer one first.
+//!
 //! In effect,
 //! e.g. `hdmia` needs to come *before* `hdmi`,
 //! because `hdmi` matches `hdmia`.
-//!
-//! So if there are multiple variants
-//! where one of them is the prefix of the other,
-//! put the longer one first.
 
 use crate::geometry::Size;
 
 use chumsky::prelude::*;
 use strum::{Display, EnumString};
+
+macro_rules! make_chumsky_parser {
+    { $( $repr:literal : $name:ident ),* $(,)? } => {
+        pub fn parser() -> impl Parser<char, Self, Error = Simple<char>> {
+            choice([$(
+                just($repr)
+                    .ignored()
+                    .map(
+                        Box::new(|_| Self::$name)
+                        as Box<dyn Fn(()) -> Self>
+                    )
+            ),*])
+        }
+    };
+}
 
 macro_rules! connectors {
     {
@@ -26,6 +39,7 @@ macro_rules! connectors {
             @ $name:ident
         ),* $(,)?
     } => {
+        $( #[$attrs] )*
         #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Display, EnumString)]
         pub enum Connector {$(
             #[strum(serialize = $swayrepr)]
@@ -33,16 +47,7 @@ macro_rules! connectors {
         ),*}
 
         impl Connector {
-            pub fn parser() -> impl Parser<char, Self, Error = Simple<char>> {
-                choice([$(
-                    just($dslrepr)
-                        .ignored()
-                        .map(
-                            Box::new(|_| Self::$name)
-                            as Box<dyn Fn(()) -> Self>
-                        )
-                ),*])
-            }
+            make_chumsky_parser! { $( $dslrepr : $name ),* }
         }
     }
 }
@@ -58,7 +63,7 @@ macro_rules! resolutions {
             @ $name:ident
         ),* $(,)?
     } => {
-        $(#[$attrs])*
+        $( #[$attrs] )*
         #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub enum Resolution {$(
             $name
@@ -74,16 +79,7 @@ macro_rules! resolutions {
                 ),*}
             }
 
-            pub fn parser() -> impl Parser<char, Self, Error = Simple<char>> {
-                choice([$(
-                    just($dslrepr)
-                        .ignored()
-                        .map(
-                            Box::new(|_| Self::$name)
-                            as Box<dyn Fn(()) -> Self>
-                        )
-                ),*])
-            }
+            make_chumsky_parser! { $( $dslrepr : $name ),* }
         }
     };
 }
