@@ -116,7 +116,11 @@ use std::str::FromStr;
 
 use chumsky::{error::Simple, prelude::*, Parser};
 
-use crate::relative::{Horizontal, Position, RelativeLayout, Vertical};
+use crate::{
+    info::Connector,
+    relative::{Horizontal, Position, RelativeLayout, Screen, Vertical},
+    Port,
+};
 
 impl FromStr for RelativeLayout {
     type Err = Vec<Simple<char>>;
@@ -127,8 +131,18 @@ impl FromStr for RelativeLayout {
 }
 
 pub fn layout() -> impl Parser<char, RelativeLayout, Error = Simple<char>> {
-    let _ = dbg!(pos().parse("bottom,center"));
+    let _ = dbg!(port().parse("hdmia9"));
     todo()
+}
+
+pub fn screen() -> impl Parser<char, Screen, Error = Simple<char>> {
+    todo()
+}
+
+pub fn port() -> impl Parser<char, Port, Error = Simple<char>> {
+    Connector::parser()
+        .then(text::int(10).or_not())
+        .map(|(kind, idx)| Port { kind, idx: idx.map(|idx| idx.parse().unwrap()).unwrap_or(1) })
 }
 
 pub fn scale() -> impl Parser<char, f64, Error = Simple<char>> {

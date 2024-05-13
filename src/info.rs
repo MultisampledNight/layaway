@@ -1,3 +1,15 @@
+//! Information of which the task of collection is just... tedious chores.
+//!
+//! Note: All enums in this module need to have more specific DSL reprs
+//! listed before more general ones.
+//! In effect,
+//! e.g. `hdmia` needs to come *before* `hdmi`,
+//! because `hdmi` matches `hdmia`.
+//!
+//! So if there are multiple variants
+//! where one of them is the prefix of the other,
+//! put the longer one first.
+
 use crate::geometry::Size;
 
 use chumsky::prelude::*;
@@ -104,11 +116,11 @@ connectors! {
     /// Wireless DisplayPort.
     "wdp" => "wDP" @ Wdp,
 
-    /// High-Definition Multimedia Interface®.
-    "hdmi" => "HDMI" @ Hdmi,
     // not sure what's the difference to normal hdmi
     // on all machines only this one is found though
     "hdmia" => "HDMI-A" @ HdmiA,
+    /// High-Definition Multimedia Interface®.
+    "hdmi" => "HDMI" @ Hdmi,
 
     /// Low-voltage differential signaling.
     /// Common on old laptops.
