@@ -16,21 +16,27 @@ pub struct Screen {
     pub pos: Position,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Position {
     pub hori: Horizontal,
     pub vert: Vertical,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Display, EnumString)]
+#[derive(
+    Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Display, EnumString,
+)]
 pub enum Horizontal {
     Left,
     Center,
+    #[default]
     Right,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Display, EnumString)]
+#[derive(
+    Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Display, EnumString,
+)]
 pub enum Vertical {
+    #[default]
     Top,
     Horizon,
     Bottom,

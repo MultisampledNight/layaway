@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
-use chumsky::{error::Simple, prelude::*, Parser};
+use chumsky::{error::Simple, prelude::*, text::whitespace, Parser};
 
-use crate::relative::RelativeLayout;
+use crate::relative::{Horizontal, Position, RelativeLayout, Vertical};
 
 impl FromStr for RelativeLayout {
     type Err = Vec<Simple<char>>;
@@ -49,30 +49,56 @@ impl FromStr for RelativeLayout {
 // - pos
 //   - defaults to "right,top"
 //   - specifies on where to place the current screen
-//     when viewing the entire bounding box
+//     referring to the entire bounding box
 //     of all layout until now
+//     so that the maximum edge is shared
+//     while the position is still fulfilled
 
 pub fn layout() -> impl Parser<char, RelativeLayout, Error = Simple<char>> {
-    let abbrev = |a, b| shorten(just(a), just(b));
+    let pos = choice((
+        hori().map(|hori| Position { hori, ..default() }),
+        vert().map(|vert| Position { vert, ..default() }),
+        separated(hori(), vert()).map(|(hori, vert)| Position { hori, vert }),
+        separated(vert(), hori()).map(|(vert, hori)| Position { hori, vert }),
+    ));
 
-    let left = abbrev('l', "eft");
-    let center = abbrev('c', "enter");
-    let right = abbrev('r', "ight");
-
-    let top = abbrev('t', "op");
-    let horizon = abbrev('h', "orizon");
-    let bottom = abbrev('b', "ottom");
-
-    let hori = choice((left, center, right));
-    let vert = choice((top, horizon, bottom));
-
-    let _ = dbg!(hori.parse("left,top"));
-    hori.then(vert).map(|_| todo!())
+    let _ = dbg!(pos.parse("bottom"));
+    pos.map(|_| todo!())
 }
 
-pub fn shorten<T, U>(
-    required: impl Parser<char, T, Error = Simple<char>>,
-    optional: impl Parser<char, U, Error = Simple<char>>,
-) -> impl Parser<char, T, Error = Simple<char>> {
-    required.then_ignore(choice((optional.ignored(), empty())))
+pub fn separated<T, U>(
+    a: impl Parser<char, T, Error = Simple<char>>,
+    b: impl Parser<char, U, Error = Simple<char>>,
+) -> impl Parser<char, (T, U), Error = Simple<char>> {
+    a.then_ignore(whitespace())
+        .then_ignore(just(','))
+        .then_ignore(whitespace())
+        .then(b)
+}
+
+pub fn hori() -> impl Parser<char, Horizontal, Error = Simple<char>> {
+    let left = shorten('l', "eft").map(|_| Horizontal::Left);
+    let center = shorten('c', "enter").map(|_| Horizontal::Center);
+    let right = shorten('r', "ight").map(|_| Horizontal::Right);
+
+    choice((left, center, right))
+}
+
+pub fn vert() -> impl Parser<char, Vertical, Error = Simple<char>> {
+    let top = shorten('t', "op").map(|_| Vertical::Top);
+    let horizon = shorten('h', "orizon").map(|_| Vertical::Horizon);
+    let bottom = shorten('b', "ottom").map(|_| Vertical::Bottom);
+
+    choice((top, horizon, bottom))
+}
+
+pub fn shorten(
+    required: char,
+    optional: &str,
+) -> impl Parser<char, char, Error = Simple<char>> + '_ {
+    just(required).then_ignore(choice((just(optional).ignored(), empty())))
+}
+
+fn default<T: Default>() -> T {
+    T::default()
 }
