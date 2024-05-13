@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::{geometry::Rect, Port};
+use crate::{geometry::Point, Port};
 
 /// How each output should be configured,
 /// as seen from Sway.
@@ -21,7 +21,7 @@ impl AbstractLayout {
 pub struct OutputRef<'layout> {
     /// Where this output is physically connected.
     port: &'layout Port,
-    /// Properties of this output, like size and scale.
+    /// Properties of this output, like position and scale.
     cfg: &'layout OutputConfig,
 }
 
@@ -29,7 +29,7 @@ pub struct OutputRef<'layout> {
 #[derive(Copy, Clone, PartialEq, PartialOrd)]
 pub struct OutputConfig {
     /// Where this output is placed in Sway.
-    dims: Rect,
+    pos: Point,
     /// With what size multiplier to have Wayland applications rendered.
     /// if they are visible on this output.
     scale: f64,
