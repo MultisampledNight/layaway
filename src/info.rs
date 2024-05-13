@@ -1,5 +1,6 @@
 use crate::geometry::Size;
 
+use chumsky::prelude::*;
 use strum::{Display, EnumString};
 
 macro_rules! connectors {
@@ -20,11 +21,15 @@ macro_rules! connectors {
         ),*}
 
         impl Connector {
-            pub fn from_dsl_name(name: &str) -> Option<Self> {
-                match name {
-                    $($dslrepr => Some(Self::$name),)*
-                    _ => None,
-                }
+            pub fn parser() -> impl Parser<char, Self, Error = Simple<char>> {
+                choice([$(
+                    just($dslrepr)
+                        .ignored()
+                        .map(
+                            Box::new(|_| Self::$name)
+                            as Box<dyn Fn(()) -> Self>
+                        )
+                ),*])
             }
         }
     }
@@ -37,14 +42,13 @@ macro_rules! resolutions {
         $(
             $width:literal
             x $height:literal
-            => $repr:literal
+            => $dslrepr:literal
             @ $name:ident
         ),* $(,)?
     } => {
         $(#[$attrs])*
-        #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Display, EnumString)]
+        #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub enum Resolution {$(
-            #[strum(serialize = $repr)]
             $name
         ),*}
 
@@ -56,6 +60,17 @@ macro_rules! resolutions {
                         height: $height,
                     }
                 ),*}
+            }
+
+            pub fn parser() -> impl Parser<char, Self, Error = Simple<char>> {
+                choice([$(
+                    just($dslrepr)
+                        .ignored()
+                        .map(
+                            Box::new(|_| Self::$name)
+                            as Box<dyn Fn(()) -> Self>
+                        )
+                ),*])
             }
         }
     };

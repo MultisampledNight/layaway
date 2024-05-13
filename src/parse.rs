@@ -2,7 +2,10 @@ use std::str::FromStr;
 
 use chumsky::{error::Simple, prelude::*, Parser};
 
-use crate::relative::{Horizontal, Position, RelativeLayout, Vertical};
+use crate::{
+    info::Resolution,
+    relative::{Horizontal, Position, RelativeLayout, Vertical},
+};
 
 impl FromStr for RelativeLayout {
     type Err = Vec<Simple<char>>;
