@@ -25,6 +25,12 @@ pub struct Point {
     pub y: Pixel,
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Size {
+    pub width: Pixel,
+    pub height: Pixel,
+}
+
 /// Range thought in pixels.
 /// [`std::ops::RangeInclusive`] but not since it's too restricted
 /// and does not implement `PartialOrd`.
