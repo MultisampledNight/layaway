@@ -1,31 +1,20 @@
 pub mod absolute;
+pub mod comms;
+pub mod convert;
 pub mod geometry;
 pub mod info;
 pub mod parse;
 pub mod relative;
 
-use std::fmt;
+use std::collections::BTreeMap;
 
 use eyre::Result;
-use info::Connector;
-use relative::RelativeLayout;
+
+pub type Map<K, V> = BTreeMap<K, V>;
 
 pub fn run() -> Result<()> {
-    let layout = "hdmi@1200p + edp/b,c";
-    let layout = layout.parse::<RelativeLayout>();
+    let layout: relative::Layout = "hdmia@1200p + edp/bottom,center".parse()?;
+    //let layout: absolute::Layout = layout.into();
     let _ = dbg!(layout);
     Ok(())
-}
-
-/// Where an output is plugged in.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Port {
-    pub kind: Connector,
-    pub idx: u32,
-}
-
-impl fmt::Display for Port {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}-{}", self.kind, self.idx)
-    }
 }

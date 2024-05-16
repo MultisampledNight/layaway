@@ -1,4 +1,4 @@
-//! Parses an unnamed DSL using [`chumsky`] into [`RelativeLayout`].
+//! Parses an unnamed DSL using [`chumsky`] into [`Layout`].
 //!
 //! The DSL's goal is to concisely describe layouts
 //! so that it becomes less tedious to express common setups like
@@ -60,11 +60,14 @@
 //!     if the position is not specified.
 //!
 //! Second, it may then, after a comma, optionally specify
-//! where exactly _B_ is placed on the selected edge of _A_.
-//! If the shared edge was `left` or `right`,
-//!     it has to be one of `top`, `center` or `bottom`.
-//! Similarly, if the shared edge was `top` or `bottom`,
-//!     it has to be one of `left`, `center` or `right`.
+//! where exactly _B_ is placed on the selected edge of _A_:
+//!
+//! - If the shared edge was `left` or `right`:
+//!     - Second part has to be one of `top`, `center` or `bottom`.
+//!     - In that case, `top` is the default.
+//! - If the shared edge was `top` or `bottom`:
+//!     - Second part has to be one of `left`, `center` or `right`.
+//!     - In that case, `center` is the default.
 //!
 //! Using `center` means to place _B_
 //! such that the midpoints of _A_ and _B_ align.
@@ -127,27 +130,45 @@
 //!       while the position is still fulfilled
 //!
 //! [ABNF]: https://datatracker.ietf.org/doc/html/rfc5234
-use std::str::FromStr;
+use std::{error::Error, fmt, str::FromStr};
 
 use chumsky::{error::Simple, prelude::*, Parser};
 
 use crate::{
+    comms::Port,
     info::{Connector, Resolution},
-    relative::{Hori, HoriSpec, Position, RelativeLayout, Screen, Vert, VertSpec},
-    Port,
+    relative::{Hori, HoriSpec, Layout, Position, Screen, Vert, VertSpec},
 };
 
-impl FromStr for RelativeLayout {
-    type Err = Vec<Simple<char>>;
+impl FromStr for Layout {
+    type Err = ParseError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        layout().parse(s)
+        layout().parse(s).map_err(ParseError)
     }
 }
 
-pub fn layout() -> impl Parser<char, RelativeLayout, Error = Simple<char>> {
+#[derive(Debug)]
+pub struct ParseError(Vec<Simple<char>>);
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "{} errors encountered:", self.0.len())?;
+
+        for (i, err) in self.0.iter().enumerate() {
+            writeln!(f, "{}: {}", i + 1, err)?;
+        }
+
+        writeln!(f, "\nfwiw this makeshift error will be replaced by ariadne... sometime")
+    }
+}
+
+impl Error for ParseError {}
+
+pub fn layout() -> impl Parser<char, Layout, Error = Simple<char>> {
     screen()
         .separated_by(just('+').padded())
-        .map(|screens| RelativeLayout { screens })
+        .then_ignore(end())
+        .map(|screens| Layout { screens })
 }
 
 pub fn screen() -> impl Parser<char, Screen, Error = Simple<char>> {

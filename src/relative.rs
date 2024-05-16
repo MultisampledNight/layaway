@@ -1,9 +1,9 @@
-use crate::{info::Resolution, Port};
+use crate::{comms::Port, info::Resolution};
 
 /// Description of a screen layout,
 /// based on relative positioning.
 #[derive(Debug)]
-pub struct RelativeLayout {
+pub struct Layout {
     pub screens: Vec<Screen>,
 }
 
