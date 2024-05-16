@@ -1,3 +1,3 @@
 fn main() -> eyre::Result<()> {
-    layout::run()
+    layaway::run()
 }
