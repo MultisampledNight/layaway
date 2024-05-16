@@ -90,41 +90,40 @@ connectors! {
     ///
     /// Names taken from:
     ///
-    /// - <https://en.wikipedia.org/wiki/DisplayPort>
-    /// - <https://en.wikipedia.org/wiki/Mobile_High-Definition_Link>
-    /// - <https://hdmi.org>
+    /// - <https://gitlab.freedesktop.org/mesa/drm/-/blob/362b5b0a886bdfbb92d2f78708ac7a67ee449b2d/xf86drmMode.c#L1784>
     ///
     /// The actual names how sway probably wants them are mostly guessed,
-    /// can't be bothered to actually look it up.
+    /// can't be bothered to actually look up how they're generated.
+    // Loosely ordered after how they appear in the source code listed above.
 
     ---
 
-    /// DisplayPort.
-    "dp" => "DP" @ Dp,
-    /// Mini DisplayPort.
-    "mdp" => "mDP" @ Mdp,
-    /// Embedded DisplayPort.
-    "edp" => "eDP" @ Edp,
-    /// Internal DisplayPort.
-    "idp" => "iDP" @ Idp,
-    /// Portable Digital Media Interface.
-    "pdmi" => "PDMI" @ Pdmi,
-    /// Wireless DisplayPort.
-    "wdp" => "wDP" @ Wdp,
+    "unknown" => "Unknown" @ Unknown,
 
-    // not sure what's the difference to normal hdmi
-    // on all my machines only this one is found though
-    "hdmia" => "HDMI-A" @ HdmiA,
-    /// High-Definition Multimedia Interface®.
-    "hdmi" => "HDMI" @ Hdmi,
+    "vga" => "VGA" @ Vga,
 
-    /// Low-voltage differential signaling.
-    /// Common on old laptops.
+    "dvii" => "DVI-I" @ DviI,
+    "dvid" => "DVI-D" @ DviD,
+    "dvia" => "DVI-A" @ DviA,
+
+    "composite" => "Composite" @ Composite,
+    "svideo" => "SVIDEO" @ Svideo,
     "lvds" => "LVDS" @ Lvds,
 
-    "dvi" => "DVI" @ Dvi,
-    "vga" => "VGA" @ Vga,
-    "scart" => "SCART" @ Scart,
+    "dp" => "DP" @ DisplayPort,
+    "hdmia" => "HDMI-A" @ HdmiA,
+    "hdmib" => "HDMI-B" @ HdmiB,
+
+    "tv" => "TV" @ Tv,
+
+    "edp" => "eDP" @ Edp,
+    "virtual" => "Virtual" @ Virtual,
+
+    "dsi" => "DSI" @ Dsi,
+    "dpi" => "DPI" @ Dpi,
+    "writeback" => "Writeback" @ Writeback,
+    "spi" => "SPI" @ Spi,
+    "usb" => "USB" @ Usb,
 }
 
 resolutions! {
