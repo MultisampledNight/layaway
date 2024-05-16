@@ -115,7 +115,7 @@
 //! # Notes
 //!
 //! - `port` number defaults to `1`
-//! - `resolution` fetches the screen resolution from Sway
+//! - `resolution` fetches the screen resolution from the WM
 //!   if left unspecified
 //! - `scale` defaults to `1`
 //!   if `resolution`
@@ -158,7 +158,10 @@ impl fmt::Display for ParseError {
             writeln!(f, "{}: {}", i + 1, err)?;
         }
 
-        writeln!(f, "\nfwiw this makeshift error will be replaced by ariadne... sometime")
+        writeln!(
+            f,
+            "\nfwiw this makeshift error will be replaced by ariadne... sometime"
+        )
     }
 }
 

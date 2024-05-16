@@ -35,14 +35,14 @@ macro_rules! connectors {
         $(
             $( #[$var_attrs:meta] )*
             $dslrepr:literal
-            => $swayrepr:literal
+            => $wmrepr:literal
             @ $name:ident
         ),* $(,)?
     } => {
         $( #[$attrs] )*
         #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Display, EnumString)]
         pub enum Connector {$(
-            #[strum(serialize = $swayrepr)]
+            #[strum(serialize = $wmrepr)]
             $name
         ),*}
 
@@ -91,10 +91,7 @@ connectors! {
     /// Names taken from:
     ///
     /// - <https://gitlab.freedesktop.org/mesa/drm/-/blob/362b5b0a886bdfbb92d2f78708ac7a67ee449b2d/xf86drmMode.c#L1784>
-    ///
-    /// The actual names how sway probably wants them are mostly guessed,
-    /// can't be bothered to actually look up how they're generated.
-    // Loosely ordered after how they appear in the source code listed above.
+    // Ordered after how they appear in the source code listed above.
 
     ---
 

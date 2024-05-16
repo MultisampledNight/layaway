@@ -1,3 +1,5 @@
+pub type Pixel = i32;
+
 /// Rectangle in pixels.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Rect {
@@ -82,5 +84,3 @@ impl Interval {
         }
     }
 }
-
-pub type Pixel = i64;
