@@ -1,5 +1,3 @@
-use strum::{Display, EnumString};
-
 use crate::{info::Resolution, Port};
 
 /// Description of a screen layout,
@@ -17,28 +15,67 @@ pub struct Screen {
     pub pos: Position,
 }
 
-#[derive(Debug, Default)]
-pub struct Position {
-    pub hori: Horizontal,
-    pub vert: Vertical,
+#[derive(Debug)]
+pub enum Position {
+    Hori { edge: Hori, spec: VertSpec },
+    Vert { edge: Vert, spec: HoriSpec },
 }
 
-#[derive(
-    Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Display, EnumString,
-)]
-pub enum Horizontal {
+impl Default for Position {
+    fn default() -> Self {
+        Self::Hori {
+            edge: Hori::default(),
+            spec: VertSpec::default(),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Hori {
     Left,
-    Center,
     #[default]
     Right,
 }
 
-#[derive(
-    Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Display, EnumString,
-)]
-pub enum Vertical {
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Vert {
     #[default]
     Top,
-    Horizon,
     Bottom,
+}
+
+// generics don't make this much nicer, difficult to name
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum HoriSpec {
+    Left,
+    #[default]
+    Center,
+    Right,
+}
+
+impl From<Hori> for HoriSpec {
+    fn from(hori: Hori) -> Self {
+        match hori {
+            Hori::Left => Self::Left,
+            Hori::Right => Self::Right,
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum VertSpec {
+    #[default]
+    Top,
+    Center,
+    Bottom,
+}
+
+impl From<Vert> for VertSpec {
+    fn from(hori: Vert) -> Self {
+        match hori {
+            Vert::Top => Self::Top,
+            Vert::Bottom => Self::Bottom,
+        }
+    }
 }

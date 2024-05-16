@@ -41,25 +41,44 @@
 //! dp + edp/bottom,center + vga/top,center
 //! ```
 //!
+//! ## Positioning
+//!
 //! Behind the scenes, layouting looks at the bounding box
 //! of all combined screens until now
 //! and then uses the specified position
-//! to decide where to place it
-//! so that the screens and the bounding box share an edge.
+//! to decide where to place it.
+//! Let's call the bounding box _A_
+//! and the current screen _B_.
+//! The position is a bit of a headache though.
 //!
-//! The position can specify
-//!     `left`,
-//!     `center`,
-//!     `right`
-//!     for horizontal positioning,
-//! and
-//!     `top`,
-//!     `horizon` (just vertical center),
-//!     `bottom`
-//!     for vertical positioning,
-//! with the first and last one of each
-//! aligning the corners of the bounding box and
-//! the current screen appropriately.
+//! First, it specifies the *edge*
+//! that _A_ and _B_ share, as seen from _A_.
+//! That has to be one of `left`, `right`, `top` or `bottom`.
+//! So `right` means that _B_ is placed
+//!     on the **right** side of _A_,
+//!     which is also the default
+//!     if the position is not specified.
+//!
+//! Second, it may then, after a comma, optionally specify
+//! where exactly _B_ is placed on the selected edge of _A_.
+//! If the shared edge was `left` or `right`,
+//!     it has to be one of `top`, `center` or `bottom`.
+//! Similarly, if the shared edge was `top` or `bottom`,
+//!     it has to be one of `left`, `center` or `right`.
+//!
+//! Using `center` means to place _B_
+//! such that the midpoints of _A_ and _B_ align.
+//! Otherwise, the directions are interpreted as the corners
+//! that should align.
+//!
+//! For example, the position `top,left` would place _B_
+//!     on the **upper** edge of _A_,
+//!     so that the **lower left** corner of _A_
+//!     touches the upper left corner of _B_.
+//! `left,top` on the other hand would place _B_
+//!     on the **left** edge of _A_,
+//!     so that the **upper right** corner of _A_
+//!     touches the upper left corner of _B_.
 //!
 //! # [ABNF]
 //!
@@ -82,16 +101,12 @@
 //! scale = float
 //! float = 1*DIGIT ["." 1*DIGIT]
 //!
-//! pos =   hori
-//!       / vert
-//!       / hori sp "," sp vert
-//!       / vert sp "," sp hori
-//! hori = "left"
-//!      / "center"
-//!      / "right"
-//! vert = "top"
-//!      / "horizon"
-//!      / "bottom"
+//! pos = hori [sp "," sp vert-spec]
+//!     / vert [sp "," sp hori-spec]
+//! hori = "left" / "right"
+//! vert = "top" / "bottom"
+//! hori-spec = hori / "center"
+//! vert-spec = vert / "center"
 //! ```
 //!
 //! # Notes
@@ -104,7 +119,7 @@
 //!   (if unspecified, the fetched one) is under 4k,
 //!   otherwise `2`
 //! - `pos`
-//!     - Defaults to `right,top`
+//!     - Defaults to `right,center`
 //!     - Specifies on where to place the current screen
 //!       referring to the entire bounding box
 //!       of all layout until now
@@ -118,7 +133,7 @@ use chumsky::{error::Simple, prelude::*, Parser};
 
 use crate::{
     info::{Connector, Resolution},
-    relative::{Horizontal, Position, RelativeLayout, Screen, Vertical},
+    relative::{Hori, HoriSpec, Position, RelativeLayout, Screen, Vert, VertSpec},
     Port,
 };
 
@@ -173,11 +188,18 @@ pub fn scale() -> impl Parser<char, f64, Error = Simple<char>> {
 }
 
 pub fn pos() -> impl Parser<char, Position, Error = Simple<char>> {
+    let hori_then_vert = hori().then(just(',').padded().ignore_then(vert_spec()).or_not());
+    let vert_then_hori = vert().then(just(',').padded().ignore_then(hori_spec()).or_not());
+
     choice((
-        separated(hori(), vert()).map(|(hori, vert)| Position { hori, vert }),
-        separated(vert(), hori()).map(|(vert, hori)| Position { hori, vert }),
-        hori().map(|hori| Position { hori, ..default() }),
-        vert().map(|vert| Position { vert, ..default() }),
+        hori_then_vert.map(|(hori, vert)| Position::Hori {
+            edge: hori,
+            spec: vert.unwrap_or_default(),
+        }),
+        vert_then_hori.map(|(vert, hori)| Position::Vert {
+            edge: vert,
+            spec: hori.unwrap_or_default(),
+        }),
     ))
 }
 
@@ -188,22 +210,30 @@ pub fn separated<T, U>(
     a.then_ignore(just(',').padded()).then(b)
 }
 
-pub fn hori() -> impl Parser<char, Horizontal, Error = Simple<char>> {
-    let left = just("left").map(|_| Horizontal::Left);
-    let center = just("center").map(|_| Horizontal::Center);
-    let right = just("right").map(|_| Horizontal::Right);
+pub fn hori() -> impl Parser<char, Hori, Error = Simple<char>> {
+    let left = just("left").to(Hori::Left);
+    let right = just("right").to(Hori::Right);
 
-    choice((left, center, right))
+    choice((left, right))
 }
 
-pub fn vert() -> impl Parser<char, Vertical, Error = Simple<char>> {
-    let top = just("top").map(|_| Vertical::Top);
-    let horizon = just("horizon").map(|_| Vertical::Horizon);
-    let bottom = just("bottom").map(|_| Vertical::Bottom);
-
-    choice((top, horizon, bottom))
+pub fn hori_spec() -> impl Parser<char, HoriSpec, Error = Simple<char>> {
+    choice((
+        hori().map(|hori| hori.into()),
+        just("center").to(HoriSpec::Center),
+    ))
 }
 
-fn default<T: Default>() -> T {
-    T::default()
+pub fn vert() -> impl Parser<char, Vert, Error = Simple<char>> {
+    let top = just("top").map(|_| Vert::Top);
+    let bottom = just("bottom").map(|_| Vert::Bottom);
+
+    choice((top, bottom))
+}
+
+pub fn vert_spec() -> impl Parser<char, VertSpec, Error = Simple<char>> {
+    choice((
+        vert().map(|vert| vert.into()),
+        just("center").to(VertSpec::Center),
+    ))
 }

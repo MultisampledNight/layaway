@@ -11,7 +11,7 @@ use info::Connector;
 use relative::RelativeLayout;
 
 pub fn run() -> Result<()> {
-    let layout = "hdmi@1200p + edp/c,b";
+    let layout = "hdmi@1200p + edp/b,c";
     let layout = layout.parse::<RelativeLayout>();
     let _ = dbg!(layout);
     Ok(())
