@@ -12,7 +12,7 @@
 //! They are concatenated using `+`.
 //! Hence, one example might be:
 //!
-//! ```
+//! ```text
 //! vga3 + dp + edp
 //! ```
 //!
@@ -37,7 +37,7 @@
 //!     the VGA one above them all,
 //! all horizontally centered, one could use:
 //!
-//! ```
+//! ```text
 //! dp + edp/bottom,center + vga/top,center
 //! ```
 //!
@@ -85,7 +85,7 @@
 //!
 //! # [ABNF]
 //!
-//! ```
+//! ```ebnf
 //! layout = screen *(sp "+" sp screen)
 //! screen =           port
 //!         [sp "@" sp resolution]

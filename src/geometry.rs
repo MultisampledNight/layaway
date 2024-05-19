@@ -59,6 +59,10 @@ impl Interval {
         self.end
     }
 
+    pub fn mid(&self) -> Pixel {
+        (self.start + self.end) / 2
+    }
+
     pub fn contains(&self, subject: Pixel) -> bool {
         self.start <= subject && subject <= self.end
     }

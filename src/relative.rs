@@ -44,7 +44,7 @@ pub enum Vert {
     Bottom,
 }
 
-// generics don't make this much nicer, difficult to name
+// TODO: make those a generic `MaybeCenter<T>` instead
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HoriSpec {
