@@ -8,6 +8,23 @@ pub struct Rect {
 }
 
 impl Rect {
+    pub fn vertices(&self) -> [Point; 4] {
+        [
+            (self.x.start(), self.y.start()),
+            (self.x.end(), self.y.start()),
+            (self.x.start(), self.y.end()),
+            (self.x.end(), self.y.end()),
+        ]
+        .map(|(x, y)| Point { x, y })
+    }
+
+    pub fn size(&self) -> Size {
+        Size {
+            width: self.x.len(),
+            height: self.y.len(),
+        }
+    }
+
     pub fn contains(&self, subject: Point) -> bool {
         self.x.contains(subject.x) && self.y.contains(subject.y)
     }
@@ -15,9 +32,15 @@ impl Rect {
     /// If `target` is outside of the rect,
     /// move corners of the rect to exactly include it.
     /// Otherwise, do nothing.
-    pub fn stretch_to(&mut self, target: Point) {
+    pub fn stretch_to_point(&mut self, target: Point) {
         self.x.stretch_to(target.x);
         self.y.stretch_to(target.y);
+    }
+
+    pub fn stretch_to_rect(&mut self, target: Self) {
+        for vertex in target.vertices() {
+            self.stretch_to_point(vertex)
+        }
     }
 }
 
@@ -61,6 +84,10 @@ impl Interval {
 
     pub fn mid(&self) -> Pixel {
         (self.start + self.end) / 2
+    }
+
+    pub fn len(&self) -> Pixel {
+        self.end - self.start
     }
 
     pub fn contains(&self, subject: Pixel) -> bool {

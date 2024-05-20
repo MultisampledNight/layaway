@@ -5,37 +5,74 @@ use crate::{
     comms::{self, Comms},
     geometry::{Interval, Pixel, Rect},
     relative::{self, Hori, HoriSpec, Position, Vert, VertSpec},
-    Map,
 };
 
 impl relative::Layout {
     /// Resolve the layout according to the currently connected displays.
     pub fn to_absolute(&self, comms: &mut dyn Comms) -> comms::Result<absolute::Layout> {
-        let current_absolute = comms.layout();
-        let mut bounding_box = Rect {
+        let mut placed = absolute::Layout::new();
+        let currently_active = comms.layout()?;
+        let mut bbox = Rect {
             x: Interval::new(0, 0),
             y: Interval::new(0, 0),
         };
-        //let placed = Map::new();
 
         for screen in &self.screens {
-            match screen.pos {
-                Position::Hori { edge, spec } => {
-                    todo!()
+            let screen_size = screen.resolution.map(|res| res.size()).or_else(|| {
+                currently_active
+                    .outputs
+                    .get(&screen.port)
+                    .map(|cfg| cfg.bounds.size())
+            });
+            let Some(screen_size) = screen_size else {
+                // user specified screen that isn't connected
+                // hence should not affect layout
+                continue;
+            };
+
+            let bounds = match screen.pos {
+                Position::Hori { edge, spec } => Rect {
+                    x: bbox.x.place_outside(screen_size.width, edge.into()),
+                    y: bbox.y.place_inside(screen_size.height, spec.into()),
+                },
+                Position::Vert { edge, spec } => Rect {
+                    x: bbox.x.place_inside(screen_size.width, spec.into()),
+                    y: bbox.y.place_outside(screen_size.height, edge.into()),
+                },
+            };
+
+            // now that we've got the screen bounds, make sure it's actually noticed
+            // by the bounding box
+            // so future screens can be placed accordingly
+            bbox.stretch_to_rect(bounds);
+
+            // that'd be it! let's actually place the screen
+            // we just calculated its bounds of
+            let scale = screen.scale.unwrap_or({
+                if screen_size.height > 4000 {
+                    2.0
+                } else {
+                    1.0
                 }
-                Position::Vert { edge, spec } => {
-                    todo!()
-                }
-            }
+            });
+            placed.add(absolute::Output {
+                port: screen.port,
+                cfg: absolute::OutputConfig {
+                    bounds,
+                    scale,
+                    active: true,
+                },
+            });
         }
 
-        todo!()
+        Ok(placed)
     }
 }
 
 impl Interval {
     /// Creates a new [`Interval`] of the given `length` next to this interval,
     /// on the given `side`.
+    /// The new interval will touch this one and share one limit.
     ///
     /// # Examples
     ///
@@ -48,7 +85,7 @@ impl Interval {
     ///     Interval::new(90, 100),
     /// );
     /// ```
-    pub fn place_adjacent(self, length: Pixel, side: Extreme) -> Self {
+    pub fn place_outside(self, length: Pixel, side: Extreme) -> Self {
         match side {
             Extreme::Least => Self::new(self.start() - length, self.start()),
             Extreme::Most => Self::new(self.end(), self.end() + length),

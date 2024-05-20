@@ -2,16 +2,24 @@ use crate::{comms::Port, geometry::Rect, Map};
 
 /// How each output should be configured,
 /// as seen from the WM.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Layout {
     pub outputs: Map<Port, OutputConfig>,
 }
 
 impl Layout {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     pub fn outputs(&self) -> impl Iterator<Item = OutputRef<'_>> {
         self.outputs
             .iter()
             .map(|(port, cfg)| OutputRef { port, cfg })
+    }
+
+    pub fn add(&mut self, output: Output) {
+        self.outputs.insert(output.port, output.cfg);
     }
 }
 
