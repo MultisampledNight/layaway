@@ -7,7 +7,11 @@ edition = "2021"
 
 [dependencies]
 chumsky = "0.9.3"
+directories-next = "2.0.0"
 eyre = "0.6.12"
+hostname = "0.4.0"
+serde = { version = "1.0.202", features = ["derive"] }
 strum = { version = "0.26.2", features = ["derive"] }
 swayipc = "3.0.2"
 thiserror = "1.0.60"
+toml = "0.8.13"
