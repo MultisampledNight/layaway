@@ -28,12 +28,29 @@ pub mod relative;
 
 use std::collections::BTreeMap;
 
+use clap::{ArgAction, Parser};
 use config::Config;
 use eyre::{Context, ContextCompat, Result};
 
 pub type Map<K, V> = BTreeMap<K, V>;
 
+/// Calculates the physical screen layout given a short relative description.
+///
+/// See https://github.com/MultisampledNight/layaway/blob/222048796dd9a8edd0cf828dfb381cbd1f2b9701/src/parse/dsl.rs
+/// for an explanation of the description format.
+#[derive(Debug, Parser)]
+pub struct Args {
+    /// By default, the calculated layout is also directly sent to the WM,
+    /// so that it becomes effective.
+    /// This flag disables that behavior, and
+    /// instead prints the required WM configuration to stdout.
+    #[arg(short = 'n', long = "no-apply", action = ArgAction::SetFalse)]
+    apply: bool,
+}
+
 pub fn run() -> Result<()> {
+    let args = Args::parse();
+
     let config = Config::new()?;
     let desc = config
         .machine_layout()
@@ -48,9 +65,16 @@ pub fn run() -> Result<()> {
     let layout = relative
         .to_absolute(comms.as_mut())
         .context("Could not absolutize layout")?;
-    comms
-        .set_layout(&layout)
-        .context("Could not set layout in WM")?;
+
+    if args.apply {
+        comms
+            .set_layout(&layout)
+            .context("Could not set layout in WM")?;
+    } else {
+        for cmd in layout.to_sway_commands() {
+            println!("{cmd}");
+        }
+    }
 
     Ok(())
 }
