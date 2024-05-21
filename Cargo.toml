@@ -4,7 +4,10 @@ version = "0.1.2"
 edition = "2021"
 description = "Layout creation for Sway via a relative and human-readable DSL."
 repository = "https://github.com/MultisampledNight/layaway"
+readme = true
 license = "MIT OR Apache-2.0"
+keywords = ["sway"]
+categories = ["command-line-utilities", "config"]
 
 [dependencies]
 chumsky = "0.9.3"

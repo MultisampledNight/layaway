@@ -125,5 +125,5 @@ dual licensed as above, without any additional terms or conditions.
 
 [Sway]: https://swaywm.org
 [directories-next]: https://docs.rs/directories-next/2.0.0/directories_next/struct.ProjectDirs.html#method.config_dir
-[`parse::dsl`]: ./src/parse/dsl.rs
+[`parse::dsl`]: https://docs.rs/layaway/latest/layaway/parse/dsl/index.html
 [`comms`]: ./src/comms/mod.rs
