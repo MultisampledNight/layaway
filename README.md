@@ -34,7 +34,7 @@ layaway 'dp3 + edp/bottom'
 2. Run `cargo install --git https://github.com/MultisampledNight/layaway`
 3. Use `layaway` as you please!
 
-> [!NOTE] WM support
+> [!WARNING]
 > Only Sway on Unixalikes is supported.
 > Feel free to take a peek inside the [`comms`] module
 > and open an issue or even PR
