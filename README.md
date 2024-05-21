@@ -43,6 +43,7 @@ layaway 'dp3 + edp/bottom'
 ## Usage details
 
 See the [`parse::dsl`] module for a detailed description
+(including an ABNF formalization!)
 of how the DSL works.
 
 You can specify the layout to use over 2 ways:
