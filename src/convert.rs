@@ -30,11 +30,15 @@ impl relative::Layout {
                 continue;
             };
 
+            // note: order of x/y placement does not actually matter
+            // they don't have any influence on each other
             let bounds = match screen.pos {
+                // place left/right of bbox, then decide exact vertical placement
                 Position::Hori { edge, spec } => Rect {
                     x: bbox.x.place_outside(screen_size.width, edge.into()),
                     y: bbox.y.place_inside(screen_size.height, spec.into()),
                 },
+                // place top/bottom of bbox, then decide exact horizontal placement
                 Position::Vert { edge, spec } => Rect {
                     x: bbox.x.place_inside(screen_size.width, spec.into()),
                     y: bbox.y.place_outside(screen_size.height, edge.into()),
@@ -46,7 +50,7 @@ impl relative::Layout {
             // so future screens can be placed accordingly
             bbox.stretch_to_rect(bounds);
 
-            // that'd be it! let's actually place the screen
+            // that'd be it! let's actually place the output screen
             // we just calculated its bounds of
             let scale = screen.scale.unwrap_or({
                 if screen_size.height > 4000 {
