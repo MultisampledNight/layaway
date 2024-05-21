@@ -4,7 +4,7 @@ use crate::{
     absolute,
     comms::{self, Comms},
     geometry::{Interval, Pixel, Rect},
-    relative::{self, Hori, HoriSpec, Position, Vert, VertSpec},
+    relative::{self, Hori, MaybeCenter, Position, Vert},
 };
 
 impl relative::Layout {
@@ -12,7 +12,7 @@ impl relative::Layout {
     pub fn to_absolute(&self, comms: &mut dyn Comms) -> comms::Result<absolute::Layout> {
         let mut placed = absolute::Layout::new();
         let currently_active = comms.layout()?;
-        let mut bbox = Rect {
+        let mut bb = Rect {
             x: Interval::new(0, 0),
             y: Interval::new(0, 0),
         };
@@ -35,20 +35,20 @@ impl relative::Layout {
             let bounds = match screen.pos {
                 // place left/right of bbox, then decide exact vertical placement
                 Position::Hori { edge, spec } => Rect {
-                    x: bbox.x.place_outside(screen_size.width, edge.into()),
-                    y: bbox.y.place_inside(screen_size.height, spec.into()),
+                    x: bb.x.place_outside(screen_size.width, edge.into()),
+                    y: bb.y.place_inside(screen_size.height, spec.map(Into::into)),
                 },
                 // place top/bottom of bbox, then decide exact horizontal placement
                 Position::Vert { edge, spec } => Rect {
-                    x: bbox.x.place_inside(screen_size.width, spec.into()),
-                    y: bbox.y.place_outside(screen_size.height, edge.into()),
+                    x: bb.x.place_inside(screen_size.width, spec.map(Into::into)),
+                    y: bb.y.place_outside(screen_size.height, edge.into()),
                 },
             };
 
             // now that we've got the screen bounds, make sure it's actually noticed
             // by the bounding box
             // so future screens can be placed accordingly
-            bbox.stretch_to_rect(bounds);
+            bb.stretch_to_rect(bounds);
 
             // that'd be it! let's actually place the output screen
             // we just calculated its bounds of
@@ -81,50 +81,42 @@ impl Interval {
     /// # Examples
     ///
     /// ```
-    /// # use layaway::{convert::Extreme, geometry::Interval};
+    /// # use layaway::{convert::Side, geometry::Interval};
     /// let space = Interval::new(100, 200);
     /// let length = 20;
     /// assert_eq!(
-    ///     space.place_adjacent(10, Extreme::Least),
+    ///     space.place_adjacent(10, Side::Least),
     ///     Interval::new(90, 100),
     /// );
     /// ```
-    pub fn place_outside(self, length: Pixel, side: Extreme) -> Self {
+    pub fn place_outside(self, length: Pixel, side: Side) -> Self {
         match side {
-            Extreme::Least => Self::new(self.start() - length, self.start()),
-            Extreme::Most => Self::new(self.end(), self.end() + length),
+            Side::Least => Self::new(self.start() - length, self.start()),
+            Side::Most => Self::new(self.end(), self.end() + length),
         }
     }
 
     /// Creates a new [`Interval`] of the given `length` inside of interval,
     /// on the given `side`.
-    pub fn place_inside(self, length: Pixel, pos: ExtremeOrCenter) -> Self {
+    pub fn place_inside(self, length: Pixel, pos: MaybeCenter<Side>) -> Self {
         match pos {
-            ExtremeOrCenter::Least => Self::new(self.start(), self.start() + length),
-            ExtremeOrCenter::Center => Self::new(self.mid() - length / 2, self.mid() + length / 2),
-            ExtremeOrCenter::Most => Self::new(self.end() - length, self.end()),
+            MaybeCenter::Extreme(Side::Least) => Self::new(self.start(), self.start() + length),
+            MaybeCenter::Center => Self::new(self.mid() - length / 2, self.mid() + length / 2),
+            MaybeCenter::Extreme(Side::Most) => Self::new(self.end() - length, self.end()),
         }
     }
 }
 
 /// Specifies one side of a 1D [`Interval`].
 #[derive(Clone, Copy, Debug)]
-pub enum Extreme {
+pub enum Side {
     Least,
-    Most,
-}
-
-/// Specifies one side or the center of a 1D [`Interval`].
-#[derive(Clone, Copy, Debug)]
-pub enum ExtremeOrCenter {
-    Least,
-    Center,
     Most,
 }
 
 // assuming a x+ right, y- bottom coordinate system
 
-impl From<Hori> for Extreme {
+impl From<Hori> for Side {
     fn from(value: Hori) -> Self {
         match value {
             Hori::Left => Self::Least,
@@ -133,31 +125,11 @@ impl From<Hori> for Extreme {
     }
 }
 
-impl From<Vert> for Extreme {
+impl From<Vert> for Side {
     fn from(value: Vert) -> Self {
         match value {
             Vert::Top => Self::Least,
             Vert::Bottom => Self::Most,
-        }
-    }
-}
-
-impl From<HoriSpec> for ExtremeOrCenter {
-    fn from(value: HoriSpec) -> Self {
-        match value {
-            HoriSpec::Left => Self::Least,
-            HoriSpec::Center => Self::Center,
-            HoriSpec::Right => Self::Most,
-        }
-    }
-}
-
-impl From<VertSpec> for ExtremeOrCenter {
-    fn from(value: VertSpec) -> Self {
-        match value {
-            VertSpec::Top => Self::Least,
-            VertSpec::Center => Self::Center,
-            VertSpec::Bottom => Self::Most,
         }
     }
 }

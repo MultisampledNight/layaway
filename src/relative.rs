@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{comms::Port, info::Resolution};
 
 /// Description of a screen layout,
@@ -17,15 +19,15 @@ pub struct Screen {
 
 #[derive(Debug)]
 pub enum Position {
-    Hori { edge: Hori, spec: VertSpec },
-    Vert { edge: Vert, spec: HoriSpec },
+    Hori { edge: Hori, spec: MaybeCenter<Vert> },
+    Vert { edge: Vert, spec: MaybeCenter<Hori> },
 }
 
 impl Default for Position {
     fn default() -> Self {
         Self::Hori {
             edge: Hori::default(),
-            spec: VertSpec::default(),
+            spec: MaybeCenter::Extreme(Vert::Top),
         }
     }
 }
@@ -44,38 +46,38 @@ pub enum Vert {
     Bottom,
 }
 
-// TODO: make those a generic `MaybeCenter<T>` instead
+pub type HoriSpec = MaybeCenter<Hori>;
+pub type VertSpec = MaybeCenter<Vert>;
 
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum HoriSpec {
-    Left,
-    #[default]
-    Center,
-    Right,
+impl Default for HoriSpec {
+    fn default() -> Self {
+        Self::Center
+    }
 }
 
-impl From<Hori> for HoriSpec {
-    fn from(hori: Hori) -> Self {
-        match hori {
-            Hori::Left => Self::Left,
-            Hori::Right => Self::Right,
+impl Default for VertSpec {
+    fn default() -> Self {
+        Self::Extreme(Vert::Top)
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum MaybeCenter<T: Clone + Copy + fmt::Debug> {
+    Extreme(T),
+    Center,
+}
+
+impl<T: Clone + Copy + fmt::Debug> MaybeCenter<T> {
+    pub fn map<U: Clone + Copy + fmt::Debug>(self, op: impl FnOnce(T) -> U) -> MaybeCenter<U> {
+        match self {
+            Self::Center => MaybeCenter::Center,
+            Self::Extreme(extreme) => MaybeCenter::Extreme(op(extreme)),
         }
     }
 }
 
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum VertSpec {
-    #[default]
-    Top,
-    Center,
-    Bottom,
-}
-
-impl From<Vert> for VertSpec {
-    fn from(hori: Vert) -> Self {
-        match hori {
-            Vert::Top => Self::Top,
-            Vert::Bottom => Self::Bottom,
-        }
+impl<T: Clone + Copy + fmt::Debug> From<T> for MaybeCenter<T> {
+    fn from(value: T) -> Self {
+        Self::Extreme(value)
     }
 }
