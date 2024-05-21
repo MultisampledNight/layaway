@@ -93,6 +93,24 @@ you can also decide to pass the `--no-apply` flag to the CLI
 to instead have the commands that would be ran
 printed to stdout.
 
+## License
+
+Licensed under either of
+
+ * Apache License, Version 2.0
+   ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+ * MIT license
+   ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
+
+## Contribution
+
+Feel free to open issues or PRs for whatever you'd like to see or want! However:
+unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
+
 [Sway]: https://swaywm.org
 [directories-next]: https://docs.rs/directories-next/2.0.0/directories_next/struct.ProjectDirs.html#method.config_dir
 [`parse::dsl`]: ./src/parse/dsl.rs
