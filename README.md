@@ -94,4 +94,5 @@ printed to stdout.
 
 [Sway]: https://swaywm.org
 [directories-next]: https://docs.rs/directories-next/2.0.0/directories_next/struct.ProjectDirs.html#method.config_dir
+[`parse::dsl`]: ./src/parse/dsl.rs
 [`comms`]: ./src/comms/mod.rs
