@@ -38,13 +38,8 @@ it lists the shell command to run!
 ### From source
 
 1. [Install Rust](https://doc.rust-lang.org/stable/book/ch01-01-installation.html)
-2. Run `cargo install --git https://github.com/MultisampledNight/layaway`
+2. Run `cargo install layaway`
 3. Use `layaway` as you please!
-
-> [!NOTE]
-> This will install *the latest development version*.
-> If you want a more stable one, consider using the latest release tag and
-> pass it via `--tag` to the `cargo install` command, too.
 
 > [!WARNING]
 > Only Sway on Unixalikes is supported.
