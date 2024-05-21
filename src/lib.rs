@@ -29,21 +29,29 @@ pub mod relative;
 use std::collections::BTreeMap;
 
 use clap::{ArgAction, Parser};
-use config::Config;
+use config::{Config, LayoutDesc};
 use eyre::{Context, ContextCompat, Result};
 
 pub type Map<K, V> = BTreeMap<K, V>;
 
-/// Calculates the physical screen layout given a short relative description.
-///
-/// See https://github.com/MultisampledNight/layaway/blob/222048796dd9a8edd0cf828dfb381cbd1f2b9701/src/parse/dsl.rs
-/// for an explanation of the description format.
+/// Calculates the physical screen layout given a short relative layout description.
 #[derive(Debug, Parser)]
 pub struct Args {
-    /// By default, the calculated layout is also directly sent to the WM,
+    /// Instead of using the machine-specific layout description from the config file,
+    /// use the given layout description.
+    ///
+    /// See the README at https://github.com/MultisampledNight/layaway
+    /// for details on the format.
+    ///
+    /// By default, the config file (`~/.config/layaway/config.toml` on Linux in most cases)
+    /// is used to look up the layout description for the given hostname.
+    desc: Option<LayoutDesc>,
+
+    /// Instead of applying the calculated layout,
+    /// print the corresponding WM configuration to stdout.
+    ///
+    /// By default, the calculated layout is directly applied to the WM,
     /// so that it becomes effective.
-    /// This flag disables that behavior, and
-    /// instead prints the required WM configuration to stdout.
     #[arg(short = 'n', long = "no-apply", action = ArgAction::SetFalse)]
     apply: bool,
 }
@@ -51,11 +59,7 @@ pub struct Args {
 pub fn run() -> Result<()> {
     let args = Args::parse();
 
-    let config = Config::new()?;
-    let desc = config
-        .machine_layout()
-        .context("Could not determine hostname to decide which layout to load")?
-        .context("Config file does not define layout for this machine")?;
+    let desc = args.desc.map(Ok).unwrap_or_else(desc_from_config)?;
 
     let relative: relative::Layout = desc
         .parse()
@@ -77,4 +81,13 @@ pub fn run() -> Result<()> {
     }
 
     Ok(())
+}
+
+pub fn desc_from_config() -> Result<LayoutDesc> {
+    let config = Config::new()?;
+    let desc = config
+        .machine_layout()
+        .context("Could not determine hostname to decide which layout to load")?
+        .context("Config file does not define layout for this machine")?;
+    Ok(desc.to_string())
 }

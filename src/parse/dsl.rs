@@ -152,13 +152,17 @@ pub struct ParseError(Vec<Simple<char>>);
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "{} errors encountered:", self.0.len())?;
+        if let [err] = self.0.as_slice() {
+            writeln!(f, "{}", err)?;
+        } else {
+            writeln!(f, "{} errors encountered:", self.0.len())?;
 
-        for (i, err) in self.0.iter().enumerate() {
-            writeln!(f, "{}: {}", i + 1, err)?;
+            for (i, err) in self.0.iter().enumerate() {
+                writeln!(f, "{}: {}", i + 1, err)?;
+            }
         }
 
-        writeln!(
+        write!(
             f,
             "\nfwiw this makeshift error will be replaced by ariadne... sometime"
         )
