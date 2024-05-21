@@ -4,7 +4,7 @@ use swayipc::Connection;
 use thiserror::Error;
 
 use crate::{
-    absolute::{self, Output, OutputConfig},
+    absolute::{self, Output, OutputConfig, OutputRef},
     geometry::{Interval, Rect},
 };
 
@@ -40,8 +40,18 @@ impl super::Comms for Comms {
         Ok(layout)
     }
 
-    fn set_layout(&mut self, layout: absolute::Layout) -> Result<()> {
-        todo!()
+    fn set_layout(&mut self, layout: &absolute::Layout) -> Result<()> {
+        for cmd in layout.to_sway_commands() {
+            self.conn
+                .run_command(cmd)
+                // all below is just propagating errors, if any
+                .map_err(Error::SwayIpc)?
+                .into_iter()
+                .collect::<Result<(), _>>()
+                .map_err(Error::SwayIpc)?;
+        }
+
+        Ok(())
     }
 }
 
@@ -95,5 +105,32 @@ impl From<swayipc::Rect> for Rect {
             x: Interval::new(model.x, model.x + model.width),
             y: Interval::new(model.y, model.y + model.height),
         }
+    }
+}
+
+impl absolute::Layout {
+    pub fn to_sway_commands(&self) -> impl Iterator<Item = String> + '_ {
+        self.outputs().map(|output| output.to_sway_command())
+    }
+}
+
+impl OutputRef<'_> {
+    pub fn to_sway_command(&self) -> String {
+        let bounds = self.cfg.bounds;
+        let size = bounds.size();
+        format!(
+            concat!(
+                "output {port} ",
+                "position {pos_x} {pos_y} ",
+                "resolution {res_width}x{res_height} ",
+                "scale {scale}",
+            ),
+            port = self.port,
+            pos_x = bounds.x.start(),
+            pos_y = bounds.y.start(),
+            res_width = size.width,
+            res_height = size.height,
+            scale = self.cfg.scale,
+        )
     }
 }

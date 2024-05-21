@@ -46,7 +46,7 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 /// in order to fetch information about available outputs.
 pub trait Comms {
     fn layout(&mut self) -> Result<absolute::Layout>;
-    fn set_layout(&mut self, layout: absolute::Layout) -> Result<()>;
+    fn set_layout(&mut self, layout: &absolute::Layout) -> Result<()>;
 }
 
 pub type BoxComms = Box<dyn Comms>;

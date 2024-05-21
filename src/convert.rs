@@ -48,6 +48,7 @@ impl relative::Layout {
             // now that we've got the screen bounds, make sure it's actually noticed
             // by the bounding box
             // so future screens can be placed accordingly
+            // TODO: apply scale to the bounds as seen by the bb?
             bb.stretch_to_rect(bounds);
 
             // that'd be it! let's actually place the output screen

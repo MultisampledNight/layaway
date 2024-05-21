@@ -14,8 +14,10 @@ pub type Map<K, V> = BTreeMap<K, V>;
 
 pub fn run() -> Result<()> {
     let mut comms = comms::establish()?;
+
     let layout: relative::Layout = "dp3 + hdmia1/right,bottom".parse()?;
     let layout = layout.to_absolute(comms.as_mut())?;
-    let _ = dbg!(layout);
+    comms.set_layout(&layout)?;
+
     Ok(())
 }
