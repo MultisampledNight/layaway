@@ -1,7 +1,8 @@
 [package]
 name = "layaway"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
+description = "Layout creation for Sway via a relative and human-readable DSL."
 repository = "https://github.com/MultisampledNight/layaway"
 license = "MIT OR Apache-2.0"
 
