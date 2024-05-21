@@ -122,7 +122,9 @@
 //!   (if unspecified, the fetched one) is under 4k,
 //!   otherwise `2`
 //! - `pos`
-//!     - Defaults to `right,center`
+//!     - Defaults to `right,top`
+//!         - If the `hori` version of pos is chosen, but no spec, `top` is assumed
+//!         - If the `vert` version of pos is chosen, but no spec, `center` is assumed
 //!     - Specifies on where to place the current screen
 //!       referring to the entire bounding box
 //!       of all layout until now
