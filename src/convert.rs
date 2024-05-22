@@ -86,7 +86,7 @@ impl Interval {
     /// let space = Interval::new(100, 200);
     /// let length = 20;
     /// assert_eq!(
-    ///     space.place_adjacent(10, Side::Least),
+    ///     space.place_outside(10, Side::Least),
     ///     Interval::new(90, 100),
     /// );
     /// ```
