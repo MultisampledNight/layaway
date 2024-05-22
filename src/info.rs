@@ -15,7 +15,7 @@ use strum::{Display, EnumString};
 
 macro_rules! make_chumsky_parser {
     { $( $repr:literal : $name:ident ),* $(,)? } => {
-        pub fn parser() -> impl Parser<char, Self, Error = Simple<char>> {
+        #[must_use] pub fn parser() -> impl Parser<char, Self, Error = Simple<char>> {
             choice([$(
                 just($repr)
                     .ignored()
@@ -70,7 +70,7 @@ macro_rules! resolutions {
         ),*}
 
         impl Resolution {
-            pub const fn size(&self) -> Size {
+            #[must_use] pub const fn size(&self) -> Size {
                 match self {$(
                     Self::$name => Size {
                         width: $width,

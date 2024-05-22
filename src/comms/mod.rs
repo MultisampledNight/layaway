@@ -22,7 +22,7 @@ use crate::{absolute, info::Connector};
 pub type Name = String;
 
 /// Figure out what WM we're running on and
-pub fn establish() -> Result<BoxComms, Error> {
+pub fn establish() -> Result<Box<dyn Comms>, Error> {
     let comms = if env::var("SWAYSOCK").is_ok() {
         sway::establish()?
     } else {
@@ -48,8 +48,6 @@ pub trait Comms {
     fn layout(&mut self) -> Result<absolute::Layout>;
     fn set_layout(&mut self, layout: &absolute::Layout) -> Result<()>;
 }
-
-pub type BoxComms = Box<dyn Comms>;
 
 /// Where an output is plugged in.
 ///

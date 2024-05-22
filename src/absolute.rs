@@ -8,6 +8,7 @@ pub struct Layout {
 }
 
 impl Layout {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }

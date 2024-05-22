@@ -18,8 +18,8 @@
 //!
 //! This would place the screens on
 //!     VGA port 3,
-//!     DisplayPort 1 and
-//!     Embedded DisplayPort 1
+//!     `DisplayPort` 1 and
+//!     Embedded `DisplayPort` 1
 //!         (probably a laptop internal one)
 //! from left to right,
 //! with their upper corners
@@ -32,8 +32,8 @@
 //! by listing it after the connector in question,
 //! separating them using `/`.
 //! For example, to place
-//!     the DisplayPort one in the center,
-//!     the embedded DisplayPort at the bottom and
+//!     the `DisplayPort` one in the center,
+//!     the embedded `DisplayPort` at the bottom and
 //!     the VGA one above them all,
 //! all horizontally centered, one could use:
 //!
@@ -155,7 +155,7 @@ pub struct ParseError(Vec<Simple<char>>);
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let [err] = self.0.as_slice() {
-            writeln!(f, "{}", err)?;
+            writeln!(f, "{err}")?;
         } else {
             writeln!(f, "{} errors encountered:", self.0.len())?;
 
@@ -173,6 +173,7 @@ impl fmt::Display for ParseError {
 
 impl Error for ParseError {}
 
+#[must_use]
 pub fn layout() -> impl Parser<char, Layout, Error = Simple<char>> {
     screen()
         .separated_by(just('+').padded())
@@ -180,6 +181,7 @@ pub fn layout() -> impl Parser<char, Layout, Error = Simple<char>> {
         .map(|screens| Layout { screens })
 }
 
+#[must_use]
 pub fn screen() -> impl Parser<char, Screen, Error = Simple<char>> {
     let resolution = Resolution::parser;
     port()
@@ -194,15 +196,19 @@ pub fn screen() -> impl Parser<char, Screen, Error = Simple<char>> {
         })
 }
 
+#[allow(clippy::missing_panics_doc)] // cannot panic since that'd mean parsing failed already
+#[must_use]
 pub fn port() -> impl Parser<char, Port, Error = Simple<char>> {
     Connector::parser()
         .then(text::int(10).or_not())
         .map(|(kind, idx)| Port {
             kind,
-            idx: idx.map(|idx| idx.parse().unwrap()).unwrap_or(1),
+            idx: idx.map_or(1, |idx| idx.parse().unwrap()),
         })
 }
 
+#[allow(clippy::missing_panics_doc)] // cannot panic since that'd mean parsing failed already
+#[must_use]
 pub fn scale() -> impl Parser<char, f64, Error = Simple<char>> {
     text::digits(10)
         .then(just('.').ignore_then(text::digits(10)).or_not())
@@ -217,6 +223,7 @@ pub fn scale() -> impl Parser<char, f64, Error = Simple<char>> {
         })
 }
 
+#[must_use]
 pub fn pos() -> impl Parser<char, Position, Error = Simple<char>> {
     let hori_then_vert = hori().then(just(',').padded().ignore_then(vert_spec()).or_not());
     let vert_then_hori = vert().then(just(',').padded().ignore_then(hori_spec()).or_not());
@@ -240,6 +247,7 @@ pub fn separated<T, U>(
     a.then_ignore(just(',').padded()).then(b)
 }
 
+#[must_use]
 pub fn hori() -> impl Parser<char, Hori, Error = Simple<char>> {
     let left = just("left").to(Hori::Left);
     let right = just("right").to(Hori::Right);
@@ -247,13 +255,12 @@ pub fn hori() -> impl Parser<char, Hori, Error = Simple<char>> {
     choice((left, right))
 }
 
+#[must_use]
 pub fn hori_spec() -> impl Parser<char, HoriSpec, Error = Simple<char>> {
-    choice((
-        hori().map(|hori| hori.into()),
-        just("center").to(HoriSpec::Center),
-    ))
+    choice((hori().map(Into::into), just("center").to(HoriSpec::Center)))
 }
 
+#[must_use]
 pub fn vert() -> impl Parser<char, Vert, Error = Simple<char>> {
     let top = just("top").map(|_| Vert::Top);
     let bottom = just("bottom").map(|_| Vert::Bottom);
@@ -261,9 +268,7 @@ pub fn vert() -> impl Parser<char, Vert, Error = Simple<char>> {
     choice((top, bottom))
 }
 
+#[must_use]
 pub fn vert_spec() -> impl Parser<char, VertSpec, Error = Simple<char>> {
-    choice((
-        vert().map(|vert| vert.into()),
-        just("center").to(VertSpec::Center),
-    ))
+    choice((vert().map(Into::into), just("center").to(VertSpec::Center)))
 }

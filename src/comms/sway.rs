@@ -8,11 +8,11 @@ use crate::{
     geometry::{Interval, Rect},
 };
 
-use super::{BoxComms, Port, Result};
+use super::{Port, Result};
 
-pub fn establish() -> Result<BoxComms> {
+pub fn establish() -> Result<Box<dyn super::Comms>> {
     let conn = Connection::new().map_err(Error::SwayIpc)?;
-    Ok(Box::new(Comms { conn }) as BoxComms)
+    Ok(Box::new(Comms { conn }) as Box<dyn super::Comms>)
 }
 
 #[derive(Debug, Error)]
@@ -115,6 +115,7 @@ impl absolute::Layout {
 }
 
 impl OutputRef<'_> {
+    #[must_use]
     pub fn to_sway_command(&self) -> String {
         let bounds = self.cfg.bounds;
         let size = bounds.size();

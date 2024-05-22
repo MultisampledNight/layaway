@@ -90,6 +90,7 @@ impl Interval {
     ///     Interval::new(90, 100),
     /// );
     /// ```
+    #[must_use]
     pub fn place_outside(self, length: Pixel, side: Side) -> Self {
         match side {
             Side::Least => Self::new(self.start() - length, self.start()),
@@ -99,6 +100,7 @@ impl Interval {
 
     /// Creates a new [`Interval`] of the given `length` inside of interval,
     /// on the given `side`.
+    #[must_use]
     pub fn place_inside(self, length: Pixel, pos: MaybeCenter<Side>) -> Self {
         match pos {
             MaybeCenter::Extreme(Side::Least) => Self::new(self.start(), self.start() + length),

@@ -59,7 +59,7 @@ pub struct Args {
 pub fn run() -> Result<()> {
     let args = Args::parse();
 
-    let desc = args.desc.map(Ok).unwrap_or_else(desc_from_config)?;
+    let desc = args.desc.map_or_else(desc_from_config, Ok)?;
 
     let relative: relative::Layout = desc
         .parse()
