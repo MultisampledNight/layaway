@@ -1,11 +1,11 @@
-use std::num::ParseIntError;
+use std::{fmt::Write, num::ParseIntError};
 
 use swayipc::Connection;
 use thiserror::Error;
 
 use crate::{
     absolute::{self, Output, OutputConfig, OutputRef},
-    geometry::{Interval, Rect},
+    geometry::{Interval, Rect, Size},
 };
 
 use super::{Port, Result};
@@ -62,6 +62,7 @@ impl TryFrom<swayipc::Output> for Output {
             port: Port::parse_from_sway(&raw.name)?,
             cfg: OutputConfig {
                 bounds: raw.rect.into(),
+                resolution: raw.current_mode.map(Into::into),
                 scale: raw.scale.unwrap_or(1.0),
                 active: raw.active,
             },
@@ -100,11 +101,25 @@ pub enum ParsePortError {
 }
 
 impl From<swayipc::Rect> for Rect {
-    fn from(model: swayipc::Rect) -> Self {
+    fn from(
+        swayipc::Rect {
+            x,
+            y,
+            width,
+            height,
+            ..
+        }: swayipc::Rect,
+    ) -> Self {
         Self {
-            x: Interval::new(model.x, model.x + model.width),
-            y: Interval::new(model.y, model.y + model.height),
+            x: Interval::new(x, x + width),
+            y: Interval::new(y, y + height),
         }
+    }
+}
+
+impl From<swayipc::Mode> for Size {
+    fn from(swayipc::Mode { width, height, .. }: swayipc::Mode) -> Self {
+        Self { width, height }
     }
 }
 
@@ -117,21 +132,29 @@ impl absolute::Layout {
 impl OutputRef<'_> {
     #[must_use]
     pub fn to_sway_command(&self) -> String {
-        let bounds = self.cfg.bounds;
-        let size = bounds.size();
-        format!(
+        let OutputConfig {
+            ref bounds,
+            ref resolution,
+            ref scale,
+            ..
+        } = &self.cfg;
+
+        let mut cmd = format!(
             concat!(
                 "output {port} ",
                 "position {pos_x} {pos_y} ",
-                "resolution {res_width}x{res_height} ",
                 "scale {scale}",
             ),
             port = self.port,
             pos_x = bounds.x.start(),
             pos_y = bounds.y.start(),
-            res_width = size.width,
-            res_height = size.height,
-            scale = self.cfg.scale,
-        )
+            scale = scale,
+        );
+
+        if let Some(res) = resolution {
+            write!(cmd, " resolution {}x{}", res.width, res.height).unwrap();
+        }
+
+        cmd
     }
 }

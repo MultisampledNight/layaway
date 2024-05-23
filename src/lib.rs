@@ -37,6 +37,7 @@ pub type Map<K, V> = BTreeMap<K, V>;
 /// Calculates the physical screen layout given a short relative layout description.
 #[derive(Debug, Parser)]
 pub struct Args {
+    #[allow(rustdoc::bare_urls)]
     /// Instead of using the machine-specific layout description from the config file,
     /// use the given layout description.
     ///

@@ -1,3 +1,9 @@
+/// Math for working with rectangles and intervals.
+///
+/// At all places, a x+ right, y+ down coordinate system is assumed.
+/// Well, except for [`Interval`] and [`Pixel`], which work in 1D.
+use std::fmt;
+
 pub type Pixel = i32;
 
 /// Rectangle in pixels.
@@ -44,6 +50,18 @@ impl Rect {
         for vertex in target.vertices() {
             self.stretch_to_point(vertex);
         }
+    }
+
+    /// Divides the size by the given `factor`,
+    /// such that all corners _except_ the given one move
+    /// (if `factor != 1.0`).
+    /// The given corner is not moved.
+    ///
+    /// Assumes a coordinate system where
+    /// x+ is right-hand and y+ is towards bottom.
+    pub fn divide_at(&mut self, corner: Corner, divisor: f64) {
+        self.x.divide_at(corner.hori.into(), divisor);
+        self.y.divide_at(corner.vert.into(), divisor);
     }
 }
 
@@ -131,6 +149,137 @@ impl Interval {
             (true, false) => *start = target,
             (false, true) => *end = target,
             _ => panic!("end is before start, meaning broken invariants"),
+        }
+    }
+
+    /// Divides the length by the given `factor`
+    /// such that the limit on `side`
+    /// stays at the same position.
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn divide_at(&mut self, side: Side, divisor: f64) {
+        match side {
+            Side::Least => self.end = self.start + (self.len() as f64 / divisor) as i32,
+            Side::Most => self.start = self.end - (self.len() as f64 / divisor) as i32,
+        }
+    }
+
+    /// Creates a new [`Interval`] of the given `length` next to this interval,
+    /// on the given `side`.
+    /// The new interval will touch this one and share one limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use layaway::geometry::{Side, Interval};
+    /// let space = Interval::new(100, 200);
+    /// let length = 20;
+    /// assert_eq!(
+    ///     space.place_outside(10, Side::Least),
+    ///     Interval::new(90, 100),
+    /// );
+    /// ```
+    #[must_use]
+    pub fn place_outside(self, length: Pixel, side: Side) -> Self {
+        match side {
+            Side::Least => Self::new(self.start - length, self.start()),
+            Side::Most => Self::new(self.end, self.end + length),
+        }
+    }
+
+    /// Creates a new [`Interval`] of the given `length` inside of interval,
+    /// on the given `side`.
+    #[must_use]
+    pub fn place_inside(self, length: Pixel, pos: MaybeCenter<Side>) -> Self {
+        match pos {
+            MaybeCenter::Extreme(Side::Least) => Self::new(self.start(), self.start() + length),
+            MaybeCenter::Center => Self::new(self.mid() - length / 2, self.mid() + length / 2),
+            MaybeCenter::Extreme(Side::Most) => Self::new(self.end - length, self.end),
+        }
+    }
+}
+
+/// One corner of a [`Rect`].
+#[derive(Clone, Copy, Debug)]
+pub struct Corner {
+    /// Whether the corner is left or right.
+    pub hori: Hori,
+    /// Whether the corner is at the top or bottom.
+    pub vert: Vert,
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Hori {
+    Left,
+    #[default]
+    Right,
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Vert {
+    #[default]
+    Top,
+    Bottom,
+}
+
+pub type HoriSpec = MaybeCenter<Hori>;
+pub type VertSpec = MaybeCenter<Vert>;
+
+impl Default for HoriSpec {
+    fn default() -> Self {
+        Self::Center
+    }
+}
+
+impl Default for VertSpec {
+    fn default() -> Self {
+        Self::Extreme(Vert::Top)
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum MaybeCenter<T: Clone + Copy + fmt::Debug> {
+    Extreme(T),
+    Center,
+}
+
+impl<T: Clone + Copy + fmt::Debug> MaybeCenter<T> {
+    pub fn map<U: Clone + Copy + fmt::Debug>(self, op: impl FnOnce(T) -> U) -> MaybeCenter<U> {
+        match self {
+            Self::Center => MaybeCenter::Center,
+            Self::Extreme(extreme) => MaybeCenter::Extreme(op(extreme)),
+        }
+    }
+}
+
+impl<T: Clone + Copy + fmt::Debug> From<T> for MaybeCenter<T> {
+    fn from(value: T) -> Self {
+        Self::Extreme(value)
+    }
+}
+
+/// Specifies one side of a 1D [`Interval`].
+#[derive(Clone, Copy, Debug)]
+pub enum Side {
+    Least,
+    Most,
+}
+
+// assuming a x+ right, y- bottom coordinate system
+
+impl From<Hori> for Side {
+    fn from(value: Hori) -> Self {
+        match value {
+            Hori::Left => Self::Least,
+            Hori::Right => Self::Most,
+        }
+    }
+}
+
+impl From<Vert> for Side {
+    fn from(value: Vert) -> Self {
+        match value {
+            Vert::Top => Self::Least,
+            Vert::Bottom => Self::Most,
         }
     }
 }

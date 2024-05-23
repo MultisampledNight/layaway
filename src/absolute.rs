@@ -1,4 +1,8 @@
-use crate::{comms::Port, geometry::Rect, Map};
+use crate::{
+    comms::Port,
+    geometry::{Rect, Size},
+    Map,
+};
 
 /// How each output should be configured,
 /// as seen from the WM.
@@ -71,6 +75,9 @@ impl<'a> From<&'a Output> for OutputRef<'a> {
 pub struct OutputConfig {
     /// Where this output is placed in the WM.
     pub bounds: Rect,
+    /// Unscaled physical resolution of the screen.
+    /// [`None`] if the screen is not active.
+    pub resolution: Option<Size>,
     /// With what size multiplier to have applications rendered
     /// if they are visible on this output.
     pub scale: f64,
