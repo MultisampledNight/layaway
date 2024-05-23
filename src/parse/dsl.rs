@@ -105,7 +105,8 @@
 //! scale = float
 //! float = 1*DIGIT ["." 1*DIGIT]
 //!
-//! transform = ["flip"] sp quarter-deg
+//! transform = ["flip"  sp] quarter-deg
+//!           /  "flip" [sp  quarter-deg]
 //! quarter-deg = "0" / "90" / "180" / "270"
 //!
 //! pos = hori [sp "," sp vert-spec]
@@ -233,10 +234,15 @@ pub fn scale() -> impl Parser<char, f64, Error = Simple<char>> {
 
 #[must_use]
 pub fn transform() -> impl Parser<char, Transform, Error = Simple<char>> {
-    let flip = just("flip").then_ignore(whitespace()).or_not();
-    flip.then(rotation()).map(|(flip, rotation)| Transform {
+    let flip = just("flip").then_ignore(whitespace());
+
+    choice((
+        flip.or_not().then(rotation().map(Some)),
+        flip.map(Some).then(rotation().or_not()),
+    ))
+    .map(|(flip, rotation)| Transform {
         flipped: flip.is_some(),
-        rotation,
+        rotation: rotation.unwrap_or_default(),
     })
 }
 
