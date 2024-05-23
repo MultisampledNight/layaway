@@ -146,6 +146,28 @@ impl Transform {
 
         Ok(Self { flipped, rotation })
     }
+
+    #[must_use]
+    pub fn to_sway(&self) -> String {
+        if !self.flipped && matches!(self.rotation, Rotation::None) {
+            return "normal".to_string();
+        }
+
+        let mut parts = Vec::new();
+
+        if self.flipped {
+            parts.push("flipped");
+        }
+
+        match self.rotation {
+            Rotation::None => (),
+            Rotation::Quarter => parts.push("90"),
+            Rotation::Half => parts.push("180"),
+            Rotation::ThreeQuarter => parts.push("270"),
+        };
+
+        parts.join("-")
+    }
 }
 
 impl From<swayipc::Rect> for Rect {
@@ -181,22 +203,24 @@ impl OutputRef<'_> {
     #[must_use]
     pub fn to_sway_command(&self) -> String {
         let OutputConfig {
-            ref bounds,
-            ref resolution,
-            ref scale,
+            bounds,
+            resolution,
+            scale,
             ..
-        } = &self.cfg;
+        } = self.cfg;
 
         let mut cmd = format!(
             concat!(
                 "output {port} ",
                 "position {pos_x} {pos_y} ",
-                "scale {scale}",
+                "scale {scale} ",
+                "transform {transform}",
             ),
             port = self.port,
             pos_x = bounds.x.start(),
             pos_y = bounds.y.start(),
             scale = scale,
+            transform = self.cfg.transform.to_sway(),
         );
 
         if let Some(res) = resolution {
