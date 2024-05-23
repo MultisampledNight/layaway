@@ -83,6 +83,7 @@ impl relative::Layout {
                     bounds,
                     scale,
                     resolution: Some(resolution),
+                    transform: screen.transform,
                     active: true,
                 },
             });

@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use crate::{
     absolute::{self, Output, OutputConfig, OutputRef},
-    geometry::{Interval, Rect, Size},
+    geometry::{Interval, Rect, Rotation, Size, Transform},
 };
 
 use super::{Port, Result};
@@ -19,8 +19,13 @@ pub fn establish() -> Result<Box<dyn super::Comms>> {
 pub enum Error {
     #[error("Over IPC: {0}")]
     SwayIpc(#[from] swayipc::Error),
-    #[error("Could not parse output name into port: {0}")]
-    ParsePort(ParsePortError),
+    #[error("Could not parse output name `{raw}` into port: {err}")]
+    ParsePort { raw: String, err: ParsePortError },
+    #[error("Could not parse transform `{raw}`: {err}")]
+    ParseTransform {
+        raw: String,
+        err: ParseTransformError,
+    },
 }
 
 #[derive(Debug)]
@@ -34,8 +39,7 @@ impl super::Comms for Comms {
         let layout = outputs
             .into_iter()
             .map(Output::try_from)
-            .collect::<Result<absolute::Layout, ParsePortError>>()
-            .map_err(Error::ParsePort)?;
+            .collect::<Result<absolute::Layout, Error>>()?;
 
         Ok(layout)
     }
@@ -56,18 +60,37 @@ impl super::Comms for Comms {
 }
 
 impl TryFrom<swayipc::Output> for Output {
-    type Error = ParsePortError;
-    fn try_from(raw: swayipc::Output) -> Result<Self, ParsePortError> {
+    type Error = Error;
+    fn try_from(raw: swayipc::Output) -> Result<Self, Self::Error> {
         Ok(Self {
-            port: Port::parse_from_sway(&raw.name)?,
+            port: Port::parse_from_sway(&raw.name).map_err(|err| Error::ParsePort {
+                raw: raw.name.clone(),
+                err,
+            })?,
             cfg: OutputConfig {
                 bounds: raw.rect.into(),
                 resolution: raw.current_mode.map(Into::into),
                 scale: raw.scale.unwrap_or(1.0),
+                transform: raw.transform.map_or(Ok(Transform::default()), |raw| {
+                    Transform::parse_from_sway(&raw).map_err(|err| Error::ParseTransform {
+                        raw: raw.to_string(),
+                        err,
+                    })
+                })?,
                 active: raw.active,
             },
         })
     }
+}
+
+#[derive(Debug, Error)]
+pub enum ParsePortError {
+    #[error("Output name must contain a dash to separate connector from index, but is `{name}`")]
+    NoDash { name: String },
+    #[error("New unknown connector name `{connector}`, perhaps libDRM got updated with new connectors? Need to add them in source here then. Feel free to report this!")]
+    NewConnector { connector: String },
+    #[error("Port index `{idx}` is not an integer: {err}")]
+    IdxNotANumber { idx: String, err: ParseIntError },
 }
 
 impl Port {
@@ -91,13 +114,38 @@ impl Port {
 }
 
 #[derive(Debug, Error)]
-pub enum ParsePortError {
-    #[error("Output name must contain a dash to separate connector from index, but is `{name}`")]
-    NoDash { name: String },
-    #[error("New unknown connector name `{connector}`, perhaps libDRM got updated with new connectors? Need to add them in source here then. Feel free to report this!")]
-    NewConnector { connector: String },
-    #[error("Port index `{idx}` is not an integer: {err}")]
-    IdxNotANumber { idx: String, err: ParseIntError },
+pub enum ParseTransformError {
+    #[error("Angle `{raw}` could not be parsed, was none of normal (only if not flipped), 90, 180 or 270")]
+    InvalidAngle { raw: String },
+}
+
+impl Transform {
+    pub fn parse_from_sway(raw: &str) -> Result<Self, ParseTransformError> {
+        let flipped = raw.contains("flipped");
+
+        let angle = if let Some(angle) = raw.strip_prefix("flipped-") {
+            angle
+        } else if raw == "normal" || raw == "flipped" {
+            "0"
+        } else {
+            // assume no flip but still rotation
+            raw
+        };
+
+        let rotation = match angle {
+            "0" => Rotation::None,
+            "90" => Rotation::Quarter,
+            "180" => Rotation::Half,
+            "270" => Rotation::ThreeQuarter,
+            _ => {
+                return Err(ParseTransformError::InvalidAngle {
+                    raw: raw.to_string(),
+                })
+            }
+        };
+
+        Ok(Self { flipped, rotation })
+    }
 }
 
 impl From<swayipc::Rect> for Rect {

@@ -65,7 +65,7 @@ impl Rect {
     }
 
     /// Swaps width and height
-    /// if the rotation is [`Quarter`] or [`ThreeQuarter`],
+    /// if the rotation is [`Rotation::Quarter`] or [`Rotation::ThreeQuarter`],
     /// keeping `corner` at the same position in any case.
     /// Otherwise, does nothing.
     pub fn rotate_in_place(&mut self, corner: Corner, amount: Rotation) {
@@ -74,7 +74,7 @@ impl Rect {
             return;
         }
 
-        self.transpose(corner)
+        self.transpose(corner);
     }
 
     /// Swaps width and height
@@ -150,13 +150,11 @@ impl Interval {
     /// Sets the length of this interval, keeping one limit
     /// and overriding the other one.
     pub fn set_len(&mut self, keep: Side, to: Pixel) {
-        // FIXME: this function can be used to break the invariants via negative `to`
-        // re-order start and end afterwards if necessary
         match keep {
             Side::Least => self.end = self.start + to,
             Side::Most => self.start = self.end - to,
         }
-        self.fix_invariants()
+        self.fix_invariants();
     }
 
     /// If `target` is outside the interval,
@@ -338,13 +336,13 @@ impl From<Vert> for Side {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Transform {
     pub flipped: bool,
     pub rotation: Rotation,
 }
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Rotation {
     #[default]
     None,
