@@ -3,7 +3,7 @@
 use crate::{
     absolute,
     comms::{self, Comms},
-    geometry::{Corner, Interval, Rect},
+    geometry::{Interval, Rect},
     relative::{self, Position},
 };
 
@@ -37,39 +37,34 @@ impl relative::Layout {
                 continue;
             };
 
-            // note: order of x/y placement does not actually matter
-            // they don't have any influence on each other
-            let mut bounds = match screen.pos {
-                // place left/right of bbox, then decide exact vertical placement
-                Position::Hori { edge, spec } => Rect {
-                    x: bb.x.place_outside(resolution.width, edge.into()),
-                    y: bb.y.place_inside(resolution.height, spec.map(Into::into)),
-                },
-                // place top/bottom of bbox, then decide exact horizontal placement
-                Position::Vert { edge, spec } => Rect {
-                    x: bb.x.place_inside(resolution.width, spec.map(Into::into)),
-                    y: bb.y.place_outside(resolution.height, edge.into()),
-                },
-            };
-
-            // FIXME: this is the wrong way around, scaling and rotation should be *before*
-            // placement
-            // See the manual page of sway-output.
-            // For positioning, the scale has to be taken into account.
+            // Which size the screen occupies in the *layout*, not physically.
+            // See the manual page of sway-output for why the scale division is done.
+            // In short: For positioning, the scale has to be taken into account.
             // So if screen A has scale 2 and has a resolution of 800x600,
             // and we wanted to place screen B right next to it,
             // we'd need to place it at 400x0 (since the scale is 2, and 800 / 2 = 400).
             // In our case, that just means dividing the size of the bounds by the scale,
             // then using it accordingly in the bounding box.
-            bounds.divide_at(Corner::UPPER_LEFT, scale);
+            let layout_size = resolution.rotate(screen.transform.rotation) / scale;
 
-            // respect rotation if any
-            bounds.rotate_in_place(Corner::UPPER_LEFT, screen.transform.rotation);
+            // note: order of x/y placement does not actually matter
+            // they don't have any influence on each other
+            let bounds = match screen.pos {
+                // place left/right of bbox, then decide exact vertical placement
+                Position::Hori { edge, spec } => Rect {
+                    x: bb.x.place_outside(layout_size.width, edge.into()),
+                    y: bb.y.place_inside(layout_size.height, spec.map(Into::into)),
+                },
+                // place top/bottom of bbox, then decide exact horizontal placement
+                Position::Vert { edge, spec } => Rect {
+                    x: bb.x.place_inside(layout_size.width, spec.map(Into::into)),
+                    y: bb.y.place_outside(layout_size.height, edge.into()),
+                },
+            };
 
             // now that we've got the screen bounds, make sure it's actually noticed
             // by the bounding box
             // so future screens can be placed accordingly
-            // TODO: apply scale to the bounds as seen by the bb?
             bb.stretch_to_rect(bounds);
 
             // that'd be it! let's actually place the output screen

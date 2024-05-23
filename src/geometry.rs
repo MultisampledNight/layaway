@@ -2,7 +2,10 @@
 ///
 /// At all places, a x+ right, y+ down coordinate system is assumed.
 /// Well, except for [`Interval`] and [`Pixel`], which work in 1D.
-use std::{fmt, mem, ops::Mul};
+use std::{
+    fmt, mem,
+    ops::{Div, Mul},
+};
 
 pub type Pixel = i32;
 
@@ -98,6 +101,22 @@ pub struct Size {
     pub height: Pixel,
 }
 
+impl Size {
+    /// Flips width and height
+    /// if the rotation is [`Rotation::Quarter`] or [`Rotation::ThreeQuarter`],
+    pub fn rotate(&self, amount: Rotation) -> Self {
+        if let Rotation::None | Rotation::Half = amount {
+            return *self;
+        }
+
+        let Self { width, height } = *self;
+        Self {
+            width: height,
+            height: width,
+        }
+    }
+}
+
 impl Mul<f64> for Size {
     type Output = Self;
 
@@ -106,6 +125,18 @@ impl Mul<f64> for Size {
         Self {
             width: (self.width as f64 * rhs) as Pixel,
             height: (self.height as f64 * rhs) as Pixel,
+        }
+    }
+}
+
+impl Div<f64> for Size {
+    type Output = Self;
+
+    #[allow(clippy::cast_possible_truncation)]
+    fn div(self, rhs: f64) -> Self::Output {
+        Self {
+            width: (self.width as f64 / rhs) as Pixel,
+            height: (self.height as f64 / rhs) as Pixel,
         }
     }
 }
