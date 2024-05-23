@@ -90,6 +90,7 @@
 //! screen =           port
 //!         [sp "@" sp resolution]
 //!         [sp ":" sp scale]
+//!         [sp "#" sp transform]
 //!         [sp "/" sp pos]
 //! sp = *(WSP / CR / LF)
 //!
@@ -103,6 +104,9 @@
 //!
 //! scale = float
 //! float = 1*DIGIT ["." 1*DIGIT]
+//!
+//! transform = ["flip"] sp quarter-deg
+//! quarter-deg = "0" / "90" / "180" / "270"
 //!
 //! pos = hori [sp "," sp vert-spec]
 //!     / vert [sp "," sp hori-spec]
@@ -121,6 +125,7 @@
 //!   if `resolution`
 //!   (if unspecified, the fetched one) is under 4k,
 //!   otherwise `2`
+//! - `transform`'s rotation is clockwise
 //! - `pos`
 //!     - Defaults to `right,top`
 //!         - If the `hori` version of pos is chosen, but no spec, `top` is assumed
@@ -134,13 +139,13 @@
 //! [ABNF]: https://datatracker.ietf.org/doc/html/rfc5234
 use std::{error::Error, fmt, str::FromStr};
 
-use chumsky::{error::Simple, prelude::*, Parser};
+use chumsky::{error::Simple, prelude::*, text::whitespace, Parser};
 
 use crate::{
     comms::Port,
-    geometry::{Hori, HoriSpec, Vert, VertSpec},
+    geometry::{Hori, HoriSpec, Rotation, Vert, VertSpec},
     info::{Connector, Resolution},
-    relative::{Layout, Position, Screen},
+    relative::{Layout, Position, Screen, Transform},
 };
 
 impl FromStr for Layout {
@@ -188,11 +193,13 @@ pub fn screen() -> impl Parser<char, Screen, Error = Simple<char>> {
     port()
         .then(just('@').padded().ignore_then(resolution()).or_not())
         .then(just(':').padded().ignore_then(scale()).or_not())
+        .then(just('#').padded().ignore_then(transform()).or_not())
         .then(just('/').padded().ignore_then(pos()).or_not())
-        .map(|(((port, resolution), scale), pos)| Screen {
+        .map(|((((port, resolution), scale), transform), pos)| Screen {
             port,
             resolution,
             scale,
+            transform: transform.unwrap_or_default(),
             pos: pos.unwrap_or_default(),
         })
 }
@@ -222,6 +229,25 @@ pub fn scale() -> impl Parser<char, f64, Error = Simple<char>> {
             .parse()
             .unwrap()
         })
+}
+
+#[must_use]
+pub fn transform() -> impl Parser<char, Transform, Error = Simple<char>> {
+    let flip = just("flip").then_ignore(whitespace()).or_not();
+    flip.then(rotation()).map(|(flip, rotation)| Transform {
+        flipped: flip.is_some(),
+        rotation,
+    })
+}
+
+#[must_use]
+pub fn rotation() -> impl Parser<char, Rotation, Error = Simple<char>> {
+    let none = just('0').to(Rotation::None);
+    let quarter = just("90").to(Rotation::Quarter);
+    let half = just("180").to(Rotation::Half);
+    let three_quarter = just("270").to(Rotation::ThreeQuarter);
+
+    choice((none, quarter, half, three_quarter))
 }
 
 #[must_use]

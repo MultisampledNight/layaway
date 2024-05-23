@@ -283,3 +283,12 @@ impl From<Vert> for Side {
         }
     }
 }
+
+#[derive(Clone, Copy, Debug, Default)]
+pub enum Rotation {
+    #[default]
+    None,
+    Quarter,
+    Half,
+    ThreeQuarter,
+}
