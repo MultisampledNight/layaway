@@ -2,7 +2,7 @@
 ///
 /// At all places, a x+ right, y+ down coordinate system is assumed.
 /// Well, except for [`Interval`] and [`Pixel`], which work in 1D.
-use std::fmt;
+use std::{fmt, mem};
 
 pub type Pixel = i32;
 
@@ -62,6 +62,27 @@ impl Rect {
     pub fn divide_at(&mut self, corner: Corner, divisor: f64) {
         self.x.divide_at(corner.hori.into(), divisor);
         self.y.divide_at(corner.vert.into(), divisor);
+    }
+
+    /// Swaps width and height
+    /// if the rotation is [`Quarter`] or [`ThreeQuarter`],
+    /// keeping `corner` at the same position in any case.
+    /// Otherwise, does nothing.
+    pub fn rotate_in_place(&mut self, corner: Corner, amount: Rotation) {
+        if let Rotation::None | Rotation::Half = amount {
+            // no need to "rotate"
+            return;
+        }
+
+        self.transpose(corner)
+    }
+
+    /// Swaps width and height
+    /// keeping `corner` at the same position in any case.
+    pub fn transpose(&mut self, Corner { vert, hori }: Corner) {
+        let prev_x_len = self.x.len();
+        self.x.set_len(hori.into(), self.y.len());
+        self.y.set_len(vert.into(), prev_x_len);
     }
 }
 
@@ -126,6 +147,18 @@ impl Interval {
         self.start <= subject && subject <= self.end
     }
 
+    /// Sets the length of this interval, keeping one limit
+    /// and overriding the other one.
+    pub fn set_len(&mut self, keep: Side, to: Pixel) {
+        // FIXME: this function can be used to break the invariants via negative `to`
+        // re-order start and end afterwards if necessary
+        match keep {
+            Side::Least => self.end = self.start + to,
+            Side::Most => self.start = self.end - to,
+        }
+        self.fix_invariants()
+    }
+
     /// If `target` is outside the interval,
     /// move the bound which is nearer to be `target` instead.
     /// Otherwise, it's inside, and do nothing.
@@ -139,10 +172,7 @@ impl Interval {
             return;
         }
 
-        let Self {
-            ref mut start,
-            ref mut end,
-        } = self;
+        let Self { start, end } = self;
 
         // on which side is `target`, before `start` or after `end`?
         match (target < *start, *end < target) {
@@ -157,10 +187,7 @@ impl Interval {
     /// stays at the same position.
     #[allow(clippy::cast_possible_truncation)]
     pub fn divide_at(&mut self, side: Side, divisor: f64) {
-        match side {
-            Side::Least => self.end = self.start + (self.len() as f64 / divisor) as i32,
-            Side::Most => self.start = self.end - (self.len() as f64 / divisor) as i32,
-        }
+        self.set_len(side, (self.len() as f64 / divisor) as Pixel);
     }
 
     /// Creates a new [`Interval`] of the given `length` next to this interval,
@@ -196,6 +223,14 @@ impl Interval {
             MaybeCenter::Extreme(Side::Most) => Self::new(self.end - length, self.end),
         }
     }
+
+    /// Sets `start` before `end` if necessary.
+    fn fix_invariants(&mut self) {
+        let Self { start, end } = self;
+        if end < start {
+            mem::swap(start, end);
+        }
+    }
 }
 
 /// One corner of a [`Rect`].
@@ -207,6 +242,13 @@ pub struct Corner {
     pub vert: Vert,
 }
 
+impl Corner {
+    pub const UPPER_LEFT: Self = Self {
+        hori: Hori::Left,
+        vert: Vert::Top,
+    };
+}
+
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Hori {
     Left,
@@ -214,11 +256,23 @@ pub enum Hori {
     Right,
 }
 
+impl From<Corner> for Hori {
+    fn from(corner: Corner) -> Self {
+        corner.hori
+    }
+}
+
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Vert {
     #[default]
     Top,
     Bottom,
+}
+
+impl From<Corner> for Vert {
+    fn from(corner: Corner) -> Self {
+        corner.vert
+    }
 }
 
 pub type HoriSpec = MaybeCenter<Hori>;
@@ -282,6 +336,12 @@ impl From<Vert> for Side {
             Vert::Bottom => Self::Most,
         }
     }
+}
+
+#[derive(Debug, Default)]
+pub struct Transform {
+    pub flipped: bool,
+    pub rotation: Rotation,
 }
 
 #[derive(Clone, Copy, Debug, Default)]

@@ -1,6 +1,6 @@
 use crate::{
     comms::Port,
-    geometry::{Hori, MaybeCenter, Rotation, Vert},
+    geometry::{Hori, MaybeCenter, Transform, Vert},
     info::Resolution,
 };
 
@@ -18,12 +18,6 @@ pub struct Screen {
     pub scale: Option<f64>,
     pub transform: Transform,
     pub pos: Position,
-}
-
-#[derive(Debug, Default)]
-pub struct Transform {
-    pub flipped: bool,
-    pub rotation: Rotation,
 }
 
 #[derive(Debug)]

@@ -144,9 +144,9 @@ use chumsky::{error::Simple, prelude::*, text::whitespace, Parser};
 
 use crate::{
     comms::Port,
-    geometry::{Hori, HoriSpec, Rotation, Vert, VertSpec},
+    geometry::{Hori, HoriSpec, Rotation, Transform, Vert, VertSpec},
     info::{Connector, Resolution},
-    relative::{Layout, Position, Screen, Transform},
+    relative::{Layout, Position, Screen},
 };
 
 impl FromStr for Layout {
