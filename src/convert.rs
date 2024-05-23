@@ -21,26 +21,21 @@ impl relative::Layout {
             // TODO: this manual merging logic is a bit strenous.
             // maybe this could be done shorter somehow?
             let screen_in_sway = current.outputs.get(&screen.port);
+
+            let scale = screen
+                .scale
+                .or_else(|| screen_in_sway.map(|cfg| cfg.scale))
+                .unwrap_or(1.0);
+
             let resolution = screen
                 .resolution
                 .map(|res| res.size())
-                .or_else(|| screen_in_sway.map(|cfg| cfg.bounds.size()));
+                .or_else(|| screen_in_sway.map(|cfg| cfg.bounds.size() * scale));
             let Some(resolution) = resolution else {
                 // user specified screen that isn't connected
                 // hence should not affect layout
                 continue;
             };
-
-            let scale = screen
-                .scale
-                .or_else(|| screen_in_sway.map(|cfg| cfg.scale))
-                .unwrap_or({
-                    if resolution.height > 4000 {
-                        2.0
-                    } else {
-                        1.0
-                    }
-                });
 
             // note: order of x/y placement does not actually matter
             // they don't have any influence on each other
@@ -57,6 +52,8 @@ impl relative::Layout {
                 },
             };
 
+            // FIXME: this is the wrong way around, scaling and rotation should be *before*
+            // placement
             // See the manual page of sway-output.
             // For positioning, the scale has to be taken into account.
             // So if screen A has scale 2 and has a resolution of 800x600,

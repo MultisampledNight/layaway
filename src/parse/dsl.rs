@@ -122,10 +122,8 @@
 //! - `port` number defaults to `1`
 //! - `resolution` fetches the screen resolution from the WM
 //!   if left unspecified
-//! - `scale` defaults to `1`
-//!   if `resolution`
-//!   (if unspecified, the fetched one) is under 4k,
-//!   otherwise `2`
+//! - `scale` always defaults to `1` if unspecified
+//!   and the screen isn't connected yet either
 //! - `transform`'s rotation is clockwise
 //! - `pos`
 //!     - Defaults to `right,top`

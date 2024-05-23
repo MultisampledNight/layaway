@@ -2,7 +2,7 @@
 ///
 /// At all places, a x+ right, y+ down coordinate system is assumed.
 /// Well, except for [`Interval`] and [`Pixel`], which work in 1D.
-use std::{fmt, mem};
+use std::{fmt, mem, ops::Mul};
 
 pub type Pixel = i32;
 
@@ -96,6 +96,18 @@ pub struct Point {
 pub struct Size {
     pub width: Pixel,
     pub height: Pixel,
+}
+
+impl Mul<f64> for Size {
+    type Output = Self;
+
+    #[allow(clippy::cast_possible_truncation)]
+    fn mul(self, rhs: f64) -> Self::Output {
+        Self {
+            width: (self.width as f64 * rhs) as Pixel,
+            height: (self.height as f64 * rhs) as Pixel,
+        }
+    }
 }
 
 /// Range thought in pixels.
