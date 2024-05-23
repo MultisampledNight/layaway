@@ -76,12 +76,12 @@
 //!
 //! For example, the position `top,left` would place _B_
 //!     on the **upper** edge of _A_,
-//!     so that the **lower left** corner of _A_
-//!     touches the upper left corner of _B_.
+//!     so that the **lower left** corner of _B_
+//!     touches the upper left corner of _A_.
 //! `left,top` on the other hand would place _B_
 //!     on the **left** edge of _A_,
-//!     so that the **upper right** corner of _A_
-//!     touches the upper left corner of _B_.
+//!     so that the **upper right** corner of _B_
+//!     touches the upper left corner of _A_.
 //!
 //! # [ABNF]
 //!
