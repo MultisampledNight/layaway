@@ -150,7 +150,7 @@ use chumsky::{error::Simple, prelude::*, text::whitespace, Parser};
 
 use crate::{
     comms::Port,
-    geometry::{Hori, HoriSpec, Rotation, Size, Transform, Vert, VertSpec},
+    geometry::{Hori, HoriSpec, Pixel, Rotation, Size, Transform, Vert, VertSpec},
     info::{Connector, Resolution},
     relative::{Layout, Position, Screen},
 };
@@ -230,9 +230,16 @@ pub fn resolution() -> impl Parser<char, Resolution, Error = Simple<char>> {
     ))
 }
 
+#[allow(clippy::cast_possible_wrap)] // the edge case of a screen's resolution being this high is bearably unlikely
 #[must_use]
 pub fn size() -> impl Parser<char, Size, Error = Simple<char>> {
-    todo()
+    integer()
+        .then_ignore(just('x').padded())
+        .then(integer())
+        .map(|(width, height)| Size {
+            width: width as Pixel,
+            height: height as Pixel,
+        })
 }
 
 #[must_use]
