@@ -60,18 +60,20 @@ macro_rules! resolutions {
     } => {
         $( #[$attrs] )*
         #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-        pub enum Resolution {$(
-            $name
-        ),*}
+        pub enum Resolution {
+            $( $name, )*
+            Custom(Size),
+        }
 
         impl Resolution {
             #[must_use] pub const fn size(&self) -> Size {
-                match self {$(
-                    Self::$name => Size {
+                match self {
+                    $( Self::$name => Size {
                         width: $width,
                         height: $height,
-                    }
-                ),*}
+                    }, )*
+                    Self::Custom(size) => *size,
+                }
             }
 
             make_chumsky_parser! { $( $dslrepr : $name ),* }

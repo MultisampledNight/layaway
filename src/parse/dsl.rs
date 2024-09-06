@@ -92,18 +92,16 @@
 //!         [sp ":" sp scale]
 //!         [sp "#" sp transform]
 //!         [sp "/" sp pos]
-//! sp = *(WSP / CR / LF)
 //!
 //! port = plug-type sp [number]
 //! connector = "edp" / "hdmi" / "dp"
 //!           / ? all other Connector variants in src/info.rs ?
-//! number = 1*DIGIT
 //!
 //! resolution = "720p" / "1080p" / "1200p" / "4k"
 //!            / ? all other Resolution variants in src/info.rs ?
+//!            / number sp "x" sp number
 //!
 //! scale = float
-//! float = 1*DIGIT ["." 1*DIGIT]
 //!
 //! transform = ["flip"  sp] quarter-deg
 //!           /  "flip" [sp  quarter-deg]
@@ -115,6 +113,10 @@
 //! vert = "top" / "bottom"
 //! hori-spec = hori / "center"
 //! vert-spec = vert / "center"
+//!
+//! sp = *(WSP / CR / LF)
+//! number = 1*DIGIT
+//! float = number ["." number]
 //! ```
 //!
 //! # Notes
