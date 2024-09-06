@@ -41,7 +41,7 @@ pub struct Args {
     /// Instead of using the machine-specific layout description from the config file,
     /// use the given layout description.
     ///
-    /// See the README at https://github.com/MultisampledNight/layaway
+    /// See the README at <https://github.com/MultisampledNight/layaway>
     /// for details on the format.
     ///
     /// By default, the config file (`~/.config/layaway/config.toml` on Linux in most cases)

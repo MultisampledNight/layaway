@@ -104,6 +104,7 @@ pub struct Size {
 impl Size {
     /// Flips width and height
     /// if the rotation is [`Rotation::Quarter`] or [`Rotation::ThreeQuarter`],
+    #[must_use]
     pub fn rotate(&self, amount: Rotation) -> Self {
         if let Rotation::None | Rotation::Half = amount {
             return *self;
