@@ -93,7 +93,7 @@
 //!         [sp "#" sp transform]
 //!         [sp "/" sp pos]
 //!
-//! port = connector sp [number]
+//! port = connector sp [integer]
 //! connector = "edp" / "hdmi" / "dp"
 //!           / ? all other Connector variants in src/info.rs ?
 //!
@@ -101,7 +101,7 @@
 //!            / ? all other Resolution variants in src/info.rs ?
 //!            ; custom resolution for more niche cases
 //!            / size
-//! size = number sp "x" sp number
+//! size = integer sp "x" sp integer
 //!
 //! scale = float
 //!
@@ -117,8 +117,12 @@
 //! vert-spec = vert / "center"
 //!
 //! sp = *(WSP / CR / LF)
-//! number = 1*DIGIT
-//! float = number ["." number]
+//! integer / "0"
+//!         / nonzero *DIGIT
+//! float = digits ["." digits]
+//!
+//! nonzero = %x31-39 ; 1..=9
+//! digits = 1*DIGIT
 //! ```
 //!
 //! # Notes
@@ -192,6 +196,7 @@ pub fn layout() -> impl Parser<char, Layout, Error = Simple<char>> {
 
 #[must_use]
 pub fn screen() -> impl Parser<char, Screen, Error = Simple<char>> {
+    let scale = float;
     port()
         .then(just('@').padded().ignore_then(resolution()).or_not())
         .then(just(':').padded().ignore_then(scale()).or_not())
@@ -210,10 +215,10 @@ pub fn screen() -> impl Parser<char, Screen, Error = Simple<char>> {
 #[must_use]
 pub fn port() -> impl Parser<char, Port, Error = Simple<char>> {
     Connector::parse_from_name()
-        .then(text::int(10).or_not())
+        .then(integer().or_not())
         .map(|(kind, idx)| Port {
             kind,
-            idx: idx.map_or(1, |idx| idx.parse().unwrap()),
+            idx: idx.unwrap_or(1),
         })
 }
 
@@ -225,26 +230,9 @@ pub fn resolution() -> impl Parser<char, Resolution, Error = Simple<char>> {
     ))
 }
 
-#[allow(clippy::missing_panics_doc)] // cannot panic since that'd mean parsing failed already
 #[must_use]
 pub fn size() -> impl Parser<char, Size, Error = Simple<char>> {
     todo()
-}
-
-#[allow(clippy::missing_panics_doc)] // cannot panic since that'd mean parsing failed already
-#[must_use]
-pub fn scale() -> impl Parser<char, f64, Error = Simple<char>> {
-    text::digits(10)
-        .then(just('.').ignore_then(text::digits(10)).or_not())
-        .map(|(natural, frac)| {
-            if let Some(frac) = frac {
-                format!("{natural}.{frac}")
-            } else {
-                natural
-            }
-            .parse()
-            .unwrap()
-        })
 }
 
 #[must_use]
@@ -319,4 +307,28 @@ pub fn vert() -> impl Parser<char, Vert, Error = Simple<char>> {
 #[must_use]
 pub fn vert_spec() -> impl Parser<char, VertSpec, Error = Simple<char>> {
     choice((vert().map(Into::into), just("center").to(VertSpec::Center)))
+}
+
+// the ones below cannot panic, otherwise parsing would've failed already
+
+#[allow(clippy::missing_panics_doc)]
+#[must_use]
+pub fn integer() -> impl Parser<char, u32, Error = Simple<char>> {
+    text::int(10).map(|source: String| source.parse().unwrap())
+}
+
+#[allow(clippy::missing_panics_doc)]
+#[must_use]
+pub fn float() -> impl Parser<char, f64, Error = Simple<char>> {
+    text::digits(10)
+        .then(just('.').ignore_then(text::digits(10)).or_not())
+        .map(|(natural, frac)| {
+            if let Some(frac) = frac {
+                format!("{natural}.{frac}")
+            } else {
+                natural
+            }
+            .parse()
+            .unwrap()
+        })
 }
