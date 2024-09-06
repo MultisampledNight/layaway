@@ -98,6 +98,8 @@ connectors! {
     "composite" => "Composite" @ Composite,
     "svideo" => "SVIDEO" @ Svideo,
     "lvds" => "LVDS" @ Lvds,
+    "component" => "Component" @ Component,
+    "din" => "DIN" @ NinePinDin,
 
     "dp" => "DP" @ DisplayPort,
     "hdmia" => "HDMI-A" @ HdmiA,
