@@ -42,7 +42,7 @@ it lists the shell command to run!
 3. Use `layaway` as you please!
 
 > [!WARNING]
-> Only Sway on Unixalikes is supported.
+> Only [Sway] on Unixalikes is supported.
 > Feel free to take a peek inside the [`comms`] module
 > and open an issue or even PR
 > if you want to change that!
