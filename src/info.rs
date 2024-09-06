@@ -14,8 +14,9 @@ use chumsky::prelude::*;
 use strum::{Display, EnumString};
 
 macro_rules! make_chumsky_parser {
-    { $( $repr:literal : $name:ident ),* $(,)? } => {
-        #[must_use] pub fn parser() -> impl Parser<char, Self, Error = Simple<char>> {
+    { $fn_name:ident => $( $repr:literal : $name:ident ),* $(,)? } => {
+        #[must_use]
+        pub fn $fn_name() -> impl Parser<char, Self, Error = Simple<char>> {
             choice([$(
                 just($repr).to(Self::$name)
             ),*])
@@ -42,7 +43,7 @@ macro_rules! connectors {
         ),*}
 
         impl Connector {
-            make_chumsky_parser! { $($( $dslrepr : $name ),*),* }
+            make_chumsky_parser! { parse_from_name => $($( $dslrepr : $name ),*),* }
         }
     }
 }
@@ -76,7 +77,7 @@ macro_rules! resolutions {
                 }
             }
 
-            make_chumsky_parser! { $( $dslrepr : $name ),* }
+            make_chumsky_parser! { parse_from_name => $( $dslrepr : $name ),* }
         }
     };
 }

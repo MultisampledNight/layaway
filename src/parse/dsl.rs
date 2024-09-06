@@ -190,7 +190,7 @@ pub fn layout() -> impl Parser<char, Layout, Error = Simple<char>> {
 
 #[must_use]
 pub fn screen() -> impl Parser<char, Screen, Error = Simple<char>> {
-    let resolution = Resolution::parser;
+    let resolution = Resolution::parse_from_name;
     port()
         .then(just('@').padded().ignore_then(resolution()).or_not())
         .then(just(':').padded().ignore_then(scale()).or_not())
@@ -208,7 +208,7 @@ pub fn screen() -> impl Parser<char, Screen, Error = Simple<char>> {
 #[allow(clippy::missing_panics_doc)] // cannot panic since that'd mean parsing failed already
 #[must_use]
 pub fn port() -> impl Parser<char, Port, Error = Simple<char>> {
-    Connector::parser()
+    Connector::parse_from_name()
         .then(text::int(10).or_not())
         .map(|(kind, idx)| Port {
             kind,
