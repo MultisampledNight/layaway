@@ -2,8 +2,11 @@
 //!
 //! Note: If there are multiple variants
 //! where one of them is the prefix of the other,
-//! put the longer one first
-//! to make sure they match earlier.
+//! put the longer one first.
+//! Otherwise the shorter one would be always matched beforehand,
+//! making the longer one unreachable.
+//!
+//! Note 2: All the interesting information is after the macro definitions.
 
 use crate::geometry::Size;
 
@@ -26,7 +29,7 @@ macro_rules! connectors {
         ---
         $(
             $( #[$var_attrs:meta] )*
-            $dslrepr:literal
+            $( $dslrepr:literal )|+
             => $wmrepr:literal
             @ $name:ident
         ),* $(,)?
@@ -39,7 +42,7 @@ macro_rules! connectors {
         ),*}
 
         impl Connector {
-            make_chumsky_parser! { $( $dslrepr : $name ),* }
+            make_chumsky_parser! { $($( $dslrepr : $name ),*),* }
         }
     }
 }
@@ -83,7 +86,9 @@ connectors! {
     /// Names taken from:
     ///
     /// - <https://gitlab.freedesktop.org/mesa/drm/-/blob/362b5b0a886bdfbb92d2f78708ac7a67ee449b2d/xf86drmMode.c#L1784>
-    // Ordered after how they appear in the source code listed above.
+    // Ordered after how they appear in the source code listed above
+    // (except for `hdmib` because `hdmia` has the alias `hdmi`, see the doccomment of this
+    // module).
 
     ---
 
@@ -102,8 +107,8 @@ connectors! {
     "din" => "DIN" @ NinePinDin,
 
     "dp" => "DP" @ DisplayPort,
-    "hdmia" => "HDMI-A" @ HdmiA,
     "hdmib" => "HDMI-B" @ HdmiB,
+    "hdmia" | "hdmi" => "HDMI-A" @ HdmiA,
 
     "tv" => "TV" @ Tv,
 
