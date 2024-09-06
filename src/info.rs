@@ -2,11 +2,8 @@
 //!
 //! Note: If there are multiple variants
 //! where one of them is the prefix of the other,
-//! put the longer one first.
-//!
-//! In effect,
-//! e.g. `hdmia` needs to come *before* `hdmi`,
-//! because `hdmi` matches `hdmia`.
+//! put the longer one first
+//! to make sure they match earlier.
 
 use crate::geometry::Size;
 
@@ -17,12 +14,7 @@ macro_rules! make_chumsky_parser {
     { $( $repr:literal : $name:ident ),* $(,)? } => {
         #[must_use] pub fn parser() -> impl Parser<char, Self, Error = Simple<char>> {
             choice([$(
-                just($repr)
-                    .ignored()
-                    .map(
-                        Box::new(|_| Self::$name)
-                        as Box<dyn Fn(()) -> Self>
-                    )
+                just($repr).to(Self::$name)
             ),*])
         }
     };
