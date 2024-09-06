@@ -93,13 +93,15 @@
 //!         [sp "#" sp transform]
 //!         [sp "/" sp pos]
 //!
-//! port = plug-type sp [number]
+//! port = connector sp [number]
 //! connector = "edp" / "hdmi" / "dp"
 //!           / ? all other Connector variants in src/info.rs ?
 //!
 //! resolution = "720p" / "1080p" / "1200p" / "4k"
 //!            / ? all other Resolution variants in src/info.rs ?
-//!            / number sp "x" sp number
+//!            ; custom resolution for more niche cases
+//!            / size
+//! size = number sp "x" sp number
 //!
 //! scale = float
 //!
@@ -144,7 +146,7 @@ use chumsky::{error::Simple, prelude::*, text::whitespace, Parser};
 
 use crate::{
     comms::Port,
-    geometry::{Hori, HoriSpec, Rotation, Transform, Vert, VertSpec},
+    geometry::{Hori, HoriSpec, Rotation, Size, Transform, Vert, VertSpec},
     info::{Connector, Resolution},
     relative::{Layout, Position, Screen},
 };
@@ -190,7 +192,6 @@ pub fn layout() -> impl Parser<char, Layout, Error = Simple<char>> {
 
 #[must_use]
 pub fn screen() -> impl Parser<char, Screen, Error = Simple<char>> {
-    let resolution = Resolution::parse_from_name;
     port()
         .then(just('@').padded().ignore_then(resolution()).or_not())
         .then(just(':').padded().ignore_then(scale()).or_not())
@@ -214,6 +215,20 @@ pub fn port() -> impl Parser<char, Port, Error = Simple<char>> {
             kind,
             idx: idx.map_or(1, |idx| idx.parse().unwrap()),
         })
+}
+
+#[must_use]
+pub fn resolution() -> impl Parser<char, Resolution, Error = Simple<char>> {
+    choice((
+        Resolution::parse_from_name(),
+        size().map(Resolution::Custom),
+    ))
+}
+
+#[allow(clippy::missing_panics_doc)] // cannot panic since that'd mean parsing failed already
+#[must_use]
+pub fn size() -> impl Parser<char, Size, Error = Simple<char>> {
+    todo()
 }
 
 #[allow(clippy::missing_panics_doc)] // cannot panic since that'd mean parsing failed already
