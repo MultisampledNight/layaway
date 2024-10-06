@@ -4,13 +4,13 @@
 /// Well, except for [`Interval`] and [`Pixel`], which work in 1D.
 use std::{
     fmt, mem,
-    ops::{Div, Mul},
+    ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
 };
 
 pub type Pixel = i32;
 
 /// Rectangle in pixels.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Rect {
     pub x: Interval,
     pub y: Interval,
@@ -89,10 +89,49 @@ impl Rect {
     }
 }
 
+impl Add<Point> for Rect {
+    type Output = Self;
+    fn add(self, rhs: Point) -> Self {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl Sub<Point> for Rect {
+    type Output = Self;
+    fn sub(self, rhs: Point) -> Self {
+        self + -rhs
+    }
+}
+
+impl AddAssign<Point> for Rect {
+    fn add_assign(&mut self, rhs: Point) {
+        *self = *self + rhs;
+    }
+}
+
+impl SubAssign<Point> for Rect {
+    fn sub_assign(&mut self, rhs: Point) {
+        *self += -rhs;
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Point {
     pub x: Pixel,
     pub y: Pixel,
+}
+
+impl Neg for Point {
+    type Output = Self;
+    fn neg(self) -> Self {
+        Self {
+            x: -self.x,
+            y: -self.y,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -145,7 +184,7 @@ impl Div<f64> for Size {
 /// Range thought in pixels.
 /// [`std::ops::RangeInclusive`] but not since it's too restricted
 /// and does not implement `PartialOrd`.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Interval {
     start: Pixel,
     end: Pixel,
@@ -272,6 +311,23 @@ impl Interval {
         if end < start {
             mem::swap(start, end);
         }
+    }
+}
+
+impl Add<Pixel> for Interval {
+    type Output = Self;
+    fn add(self, rhs: Pixel) -> Self {
+        Self {
+            start: self.start + rhs,
+            end: self.end + rhs,
+        }
+    }
+}
+
+impl Sub<Pixel> for Interval {
+    type Output = Self;
+    fn sub(self, rhs: Pixel) -> Self {
+        self + -rhs
     }
 }
 

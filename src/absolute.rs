@@ -1,6 +1,6 @@
 use crate::{
     comms::Port,
-    geometry::{Rect, Size, Transform},
+    geometry::{Point, Rect, Size, Transform},
     Map,
 };
 
@@ -25,6 +25,36 @@ impl Layout {
 
     pub fn add(&mut self, output: Output) {
         self.outputs.insert(output.port, output.cfg);
+    }
+
+    /// The smallest rectangle that includes all output bounds.
+    pub fn bounding_box(&self) -> Rect {
+        let mut bb = Rect::default();
+        for cfg in self.outputs.values() {
+            bb.stretch_to_rect(cfg.bounds);
+        }
+        bb
+    }
+
+    /// Move all outputs so that the bounding box has a corner at the origin.
+    /// Their relative positions to each other aren't changed.
+    ///
+    /// This implies moving all bounds into the positive space.
+    /// Some applications appear to only use unsigned numbers
+    /// for their absolute positions,
+    /// so this might fix their inputs.
+    pub fn reset_to_origin(&mut self) {
+        // find out how much we need to move
+        let bb = self.bounding_box();
+        let least = Point {
+            x: bb.x.start(),
+            y: bb.y.start(),
+        };
+
+        // then actually do move everything
+        for cfg in self.outputs.values_mut() {
+            cfg.bounds -= least;
+        }
     }
 }
 

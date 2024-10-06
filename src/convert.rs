@@ -3,7 +3,7 @@
 use crate::{
     absolute,
     comms::{self, Comms},
-    geometry::{Interval, Rect},
+    geometry::Rect,
     relative::{self, Position},
 };
 
@@ -12,10 +12,7 @@ impl relative::Layout {
     pub fn to_absolute(&self, comms: &mut dyn Comms) -> comms::Result<absolute::Layout> {
         let mut placed = absolute::Layout::new();
         let current = comms.layout()?;
-        let mut bb = Rect {
-            x: Interval::new(0, 0),
-            y: Interval::new(0, 0),
-        };
+        let mut bb = Rect::default();
 
         for screen in &self.screens {
             // TODO: this manual merging logic is a bit strenous.
@@ -68,7 +65,7 @@ impl relative::Layout {
             bb.stretch_to_rect(bounds);
 
             // that'd be it! let's actually place the output screen
-            // we just calculated its bounds of
+            // we just calculated the bounds of
             placed.add(absolute::Output {
                 port: screen.port,
                 cfg: absolute::OutputConfig {
@@ -80,6 +77,8 @@ impl relative::Layout {
                 },
             });
         }
+
+        placed.reset_to_origin();
 
         Ok(placed)
     }
