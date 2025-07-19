@@ -123,6 +123,9 @@ connectors! {
     "writeback" => "Writeback" @ Writeback,
     "spi" => "SPI" @ Spi,
     "usb" => "USB" @ Usb,
+
+    // more special case -- used by Sway for `swaymsg create_output`
+    "headless" => "HEADLESS" @ Headless,
 }
 
 resolutions! {
